@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Premier League Darts</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -264,6 +265,162 @@
 
         ::-webkit-scrollbar-thumb:hover {
             background: linear-gradient(45deg, #f7931e, #ff6b35);
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                gap: 15px;
+                padding: 10px;
+            }
+
+            .history {
+                width: 100%;
+                order: 2;
+                margin-bottom: 15px;
+            }
+
+            .center {
+                order: 1;
+                padding: 20px;
+                margin-bottom: 15px;
+            }
+
+            .center h2 {
+                font-size: 1.8em;
+                letter-spacing: 2px;
+            }
+
+            .prompt {
+                padding: 12px 20px;
+                font-size: 1em;
+                margin: 15px 0;
+            }
+
+            .player-card {
+                padding: 15px;
+                margin: 10px;
+            }
+
+            .player-card h3 {
+                font-size: 1.1em;
+            }
+
+            .player-card p {
+                font-size: 1em;
+            }
+
+            #player_name {
+                width: 100%;
+                max-width: 280px;
+                padding: 10px 15px;
+            }
+
+            button {
+                padding: 10px 25px;
+                font-size: 0.9em;
+            }
+
+            #timer {
+                font-size: 1.2em;
+                margin-top: 15px;
+            }
+
+            .message {
+                font-size: 13px;
+                padding: 12px;
+                margin: 15px 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 8px;
+            }
+
+            .center {
+                padding: 15px;
+            }
+
+            .center h2 {
+                font-size: 1.5em;
+                letter-spacing: 1px;
+            }
+
+            .prompt {
+                padding: 10px 15px;
+                font-size: 0.9em;
+            }
+
+            .player-card {
+                padding: 12px;
+                margin: 8px;
+            }
+
+            .player-card h3 {
+                font-size: 1em;
+            }
+
+            .player-card p {
+                font-size: 0.9em;
+            }
+
+            #player_name {
+                padding: 8px 12px;
+                font-size: 0.9em;
+            }
+
+            button {
+                padding: 8px 20px;
+                font-size: 0.8em;
+            }
+
+            #timer {
+                font-size: 1em;
+            }
+
+            .message {
+                font-size: 12px;
+                padding: 10px;
+            }
+
+            .history h3 {
+                font-size: 1em;
+                letter-spacing: 1px;
+            }
+
+            .history p {
+                font-size: 0.8em;
+                padding: 6px;
+            }
+        }
+
+        /* Landscape orientation adjustments for mobile */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .container {
+                flex-direction: row;
+                gap: 10px;
+            }
+
+            .history {
+                width: 200px;
+                order: 0;
+            }
+
+            .center {
+                order: 1;
+                flex: 1;
+            }
+
+            .center h2 {
+                font-size: 1.4em;
+            }
+
+            .prompt {
+                font-size: 0.9em;
+                padding: 8px 15px;
+            }
         }
     </style>
 </head>
