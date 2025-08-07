@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Premier League Darts</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #ffffff;
+        }
+
+        .container { 
+            display: flex; 
+            gap: 30px; 
+            padding: 20px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .history { 
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px; 
+            width: 250px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .history h3 {
+            font-family: 'Orbitron', monospace;
+            color: #ff6b35;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .history p { 
+            margin: 8px 0;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid #ff6b35;
+            font-size: 0.9em;
+        }
+
+        .center { 
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 30px; 
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            flex: 1;
+        }
+
+        .center h2 {
+            font-family: 'Orbitron', monospace;
+            color: #ff6b35;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 20px rgba(255, 107, 53, 0.5);
+        }
+
+        .prompt {
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            padding: 15px 25px;
+            border-radius: 25px;
+            margin: 20px 0;
+            font-weight: 500;
+            font-size: 1.1em;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .player-card { 
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px; 
+            margin: 15px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .player-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .player-card.active { 
+            border: 3px solid #ff6b35;
+            box-shadow: 0 0 30px rgba(255, 107, 53, 0.4);
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(247, 147, 30, 0.1));
+        }
+
+        .player-card h3 {
+            font-family: 'Orbitron', monospace;
+            color: #ff6b35;
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .player-card p {
+            font-size: 1.1em;
+            margin: 5px 0;
+        }
+
+        .player-card p[style*="color: blue"] {
+            color: #4ecdc4 !important;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #player-form {
+            margin: 25px 0;
+        }
+
+        .autocomplete-container {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        #player_name {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            padding: 12px 20px;
+            font-size: 1em;
+            color: white;
+            width: 300px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        #player_name::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        #player_name:focus {
+            border-color: #ff6b35;
+            box-shadow: 0 0 20px rgba(255, 107, 53, 0.3);
+        }
+
+        button {
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-size: 1em;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .message { 
+            color: #ff6b35; 
+            white-space: pre-line;
+            margin: 20px 0;
+            font-size: 14px;
+            text-align: left;
+            background: rgba(255, 107, 53, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ff6b35;
+        }
+
+        .message.success { 
+            color: #4CAF50; 
+            background: rgba(76, 175, 80, 0.1);
+            border-left: 4px solid #4CAF50;
+        }
+
+        #timer {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5em;
+            margin-top: 20px;
+            color: #4ecdc4;
+            text-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
+            font-weight: 700;
+        }
+
+        /* Autocomplete dropdown styles */
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 107, 53, 0.3);
+            border-radius: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .autocomplete-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease;
+            color: white;
+        }
+
+        .autocomplete-item:hover {
+            background: rgba(255, 107, 53, 0.2);
+        }
+
+        .autocomplete-item.selected {
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            color: white;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, #f7931e, #ff6b35);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="history">
+            <h3>Player 1 History</h3>
+            {% for entry in history[0] %}
+                <p>{{ entry.name }}: {{ entry.result }}</p>
+            {% endfor %}
+        </div>
+        <div class="center">
+            <h2>Premier League Darts</h2>
+            <div class="prompt">
+                {% if prompt.type == 'club' %}
+                    Pick a player from {{ prompt.value }} who played as a
+                    {% if prompt.position == 'FW' %}Forward
+                    {% elif prompt.position == 'DF' %}Defender
+                    {% elif prompt.position == 'MF' %}Midfielder
+                    {% elif prompt.position == 'GK' %}Goalkeeper
+                    {% else %}{{ prompt.position }}{% endif %}
+                {% elif prompt.type == 'country' %}
+                    Pick a player from 
+                    {% if prompt.value == 'ENG' %}England
+                    {% elif prompt.value == 'FRA' %}France
+                    {% elif prompt.value == 'ESP' %}Spain
+                    {% elif prompt.value == 'GER' %}Germany
+                    {% elif prompt.value == 'ITA' %}Italy
+                    {% elif prompt.value == 'NED' %}Netherlands
+                    {% elif prompt.value == 'BEL' %}Belgium
+                    {% elif prompt.value == 'POR' %}Portugal
+                    {% elif prompt.value == 'BRA' %}Brazil
+                    {% elif prompt.value == 'ARG' %}Argentina
+                    {% elif prompt.value == 'IRL' %}Ireland
+                    {% elif prompt.value == 'SCO' %}Scotland
+                    {% elif prompt.value == 'WAL' %}Wales
+                    {% elif prompt.value == 'SWE' %}Sweden
+                    {% elif prompt.value == 'NOR' %}Norway
+                    {% elif prompt.value == 'DEN' %}Denmark
+                    {% elif prompt.value == 'AUT' %}Austria
+                    {% elif prompt.value == 'SUI' %}Switzerland
+                    {% elif prompt.value == 'CZE' %}Czech Republic
+                    {% elif prompt.value == 'POL' %}Poland
+                    {% else %}{{ prompt.value }}{% endif %}
+                    who played as a
+                    {% if prompt.position == 'FW' %}Forward
+                    {% elif prompt.position == 'DF' %}Defender
+                    {% elif prompt.position == 'MF' %}Midfielder
+                    {% elif prompt.position == 'GK' %}Goalkeeper
+                    {% else %}{{ prompt.position }}{% endif %}
+                {% elif prompt.type == 'country_club' %}
+                    Pick a player from 
+                    {% if prompt.value == 'ENG' %}England
+                    {% elif prompt.value == 'FRA' %}France
+                    {% elif prompt.value == 'ESP' %}Spain
+                    {% elif prompt.value == 'GER' %}Germany
+                    {% elif prompt.value == 'ITA' %}Italy
+                    {% elif prompt.value == 'NED' %}Netherlands
+                    {% elif prompt.value == 'BEL' %}Belgium
+                    {% elif prompt.value == 'POR' %}Portugal
+                    {% elif prompt.value == 'BRA' %}Brazil
+                    {% elif prompt.value == 'ARG' %}Argentina
+                    {% elif prompt.value == 'IRL' %}Ireland
+                    {% elif prompt.value == 'SCO' %}Scotland
+                    {% elif prompt.value == 'WAL' %}Wales
+                    {% elif prompt.value == 'SWE' %}Sweden
+                    {% elif prompt.value == 'NOR' %}Norway
+                    {% elif prompt.value == 'DEN' %}Denmark
+                    {% elif prompt.value == 'AUT' %}Austria
+                    {% elif prompt.value == 'SUI' %}Switzerland
+                    {% elif prompt.value == 'CZE' %}Czech Republic
+                    {% elif prompt.value == 'POL' %}Poland
+                    {% else %}{{ prompt.value }}{% endif %}
+                    who played for {{ prompt.club }}
+                {% endif %}
+            </div>
+            <div style="display: flex; justify-content: center; gap: 10px;">
+                {% for player in players %}
+                    <div class="player-card {% if loop.index0 == turn %}active{% endif %}">
+                        <h3>{{ player.name }}</h3>
+                        <p>Score: {{ player.score }}</p>
+                        {% if loop.index0 == turn %}<p style="color: blue;">Your Turn</p>{% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+            <form id="player-form">
+                <div class="autocomplete-container">
+                    <input type="text" id="player_name" placeholder="Enter player name" required autocomplete="off">
+                    <div id="autocomplete-dropdown" class="autocomplete-dropdown"></div>
+                </div>
+                <button type="submit">Submit</button>
+            </form>
+            <div class="message {% if 'accepted' in message or 'wins' in message %}success{% endif %}">{{ message | safe }}</div>
+            <button id="reset-btn">Reset Game</button>
+            <div id="timer" style="font-size: 24px; margin-top: 10px;">Time left: 30</div>
+        </div>
+        <div class="history">
+            <h3>Player 2 History</h3>
+            {% for entry in history[1] %}
+                <p>{{ entry.name }}: {{ entry.result }}</p>
+            {% endfor %}
+        </div>
+    </div>
+    <script>
+        let timer = 60;
+        let interval = setInterval(() => {
+          timer--;
+          updateTimerDisplay(timer);
+          if (timer <= 0) {
+            clearInterval(interval);
+            fetch('/forfeit', {method: 'POST'})
+              .then(res => res.json())
+              .then(() => window.location.reload());
+          }
+        }, 1000);
+
+        function updateTimerDisplay(time) {
+          document.getElementById('timer').innerText = 'Time left: ' + time;
+        }
+
+        document.getElementById('player-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const playerName = document.getElementById('player_name').value;
+            const response = await fetch('/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `player_name=${encodeURIComponent(playerName)}`
+            });
+            const data = await response.json();
+            // Reload page to update UI
+            window.location.reload();
+        });
+
+        document.getElementById('reset-btn').onclick = function() {
+            fetch('/reset', {method: 'POST'})
+                .then(res => res.json())
+                .then(() => window.location.reload());
+        };
+
+        // Autocomplete functionality
+        const playerInput = document.getElementById('player_name');
+        const dropdown = document.getElementById('autocomplete-dropdown');
+        let selectedIndex = -1;
+        let suggestions = [];
+
+        playerInput.addEventListener('input', async function() {
+            const query = this.value.trim();
+            if (query.length < 2) {
+                hideDropdown();
+                return;
+            }
+
+            try {
+                const response = await fetch(`/search_players?q=${encodeURIComponent(query)}`);
+                suggestions = await response.json();
+                showDropdown(suggestions);
+            } catch (error) {
+                console.error('Error fetching suggestions:', error);
+            }
+        });
+
+        playerInput.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedIndex = Math.min(selectedIndex + 1, suggestions.length - 1);
+                updateSelection();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedIndex = Math.max(selectedIndex - 1, -1);
+                updateSelection();
+            } else if (e.key === 'Enter' && selectedIndex >= 0) {
+                e.preventDefault();
+                selectSuggestion(suggestions[selectedIndex]);
+            } else if (e.key === 'Escape') {
+                hideDropdown();
+            }
+        });
+
+        function showDropdown(items) {
+            if (items.length === 0) {
+                hideDropdown();
+                return;
+            }
+
+            dropdown.innerHTML = '';
+            items.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'autocomplete-item';
+                div.textContent = item;
+                div.onclick = () => selectSuggestion(item);
+                dropdown.appendChild(div);
+            });
+            dropdown.style.display = 'block';
+            selectedIndex = -1;
+        }
+
+        function hideDropdown() {
+            dropdown.style.display = 'none';
+            selectedIndex = -1;
+        }
+
+        function updateSelection() {
+            const items = dropdown.querySelectorAll('.autocomplete-item');
+            items.forEach((item, index) => {
+                item.classList.toggle('selected', index === selectedIndex);
+            });
+        }
+
+        function selectSuggestion(name) {
+            playerInput.value = name;
+            hideDropdown();
+        }
+
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.autocomplete-container')) {
+                hideDropdown();
+            }
+        });
+    </script>
+</body>
+</html>
