@@ -187,6 +187,28 @@
             transform: translateY(0);
         }
 
+        .back-to-lobby {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d) !important;
+            border: none !important;
+            border-radius: 25px !important;
+            padding: 12px 30px !important;
+            font-size: 1em !important;
+            font-weight: 600 !important;
+            color: white !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+            box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3) !important;
+            text-decoration: none !important;
+            display: inline-block !important;
+        }
+
+        .back-to-lobby:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 20px rgba(78, 205, 196, 0.4) !important;
+        }
+
         .message { 
             color: #ff6b35; 
             white-space: pre-line;
@@ -433,6 +455,11 @@
             {% endfor %}
         </div>
         <div class="center">
+            <div style="background: rgba(255, 255, 255, 0.1); padding: 10px 20px; border-radius: 15px; margin-bottom: 20px; border: 1px solid rgba(255, 255, 255, 0.2);">
+                <div style="font-family: 'Orbitron', monospace; color: #4ecdc4; font-size: 0.9em; margin-bottom: 5px;">Session ID: {{ session_id }}</div>
+                <div style="font-size: 0.8em; color: rgba(255, 255, 255, 0.7);">Share this ID with your opponent to join the game</div>
+                <div id="game-status" style="font-size: 0.8em; color: #ff9800; margin-top: 5px;">Waiting for players to join...</div>
+            </div>
             <h2>Premier League Darts</h2>
             <div class="prompt">
                 {% if prompt.type == 'club' %}
@@ -507,6 +534,7 @@
                 {% endfor %}
             </div>
             <form id="player-form">
+                <input type="hidden" id="session_id" value="{{ session_id }}">
                 <div class="autocomplete-container">
                     <input type="text" id="player_name" placeholder="Enter player name" required autocomplete="off">
                     <div id="autocomplete-dropdown" class="autocomplete-dropdown"></div>
@@ -514,8 +542,11 @@
                 <button type="submit">Submit</button>
             </form>
             <div class="message {% if 'accepted' in message or 'wins' in message %}success{% endif %}">{{ message | safe }}</div>
-            <button id="reset-btn">Reset Game</button>
-            <div id="timer" style="font-size: 24px; margin-top: 10px;">Time left: 30</div>
+            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+                <button id="reset-btn">Reset Game</button>
+                <a href="/lobby" class="back-to-lobby">Back to Lobby</a>
+            </div>
+            <div id="timer" style="font-size: 24px; margin-top: 10px;">Waiting for players...</div>
         </div>
         <div class="history">
             <h3>Player 2 History</h3>
@@ -526,28 +557,45 @@
     </div>
     <script>
         let timer = 60;
-        let interval = setInterval(() => {
-          timer--;
-          updateTimerDisplay(timer);
-          if (timer <= 0) {
-            clearInterval(interval);
-            fetch('/forfeit', {method: 'POST'})
-              .then(res => res.json())
-              .then(() => window.location.reload());
-          }
-        }, 1000);
+        let gameStarted = false;
+        let interval = null;
+
+        function startTimer() {
+            if (interval) clearInterval(interval);
+            interval = setInterval(() => {
+                timer--;
+                updateTimerDisplay(timer);
+                if (timer <= 0) {
+                    clearInterval(interval);
+                    const sessionId = document.getElementById('session_id').value;
+                    fetch('/forfeit', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `session_id=${encodeURIComponent(sessionId)}`
+                    })
+                      .then(res => res.json())
+                      .then(() => window.location.reload());
+                }
+            }, 1000);
+        }
 
         function updateTimerDisplay(time) {
-          document.getElementById('timer').innerText = 'Time left: ' + time;
+            const timerElement = document.getElementById('timer');
+            if (gameStarted) {
+                timerElement.innerText = 'Time left: ' + time;
+            } else {
+                timerElement.innerText = 'Waiting for players...';
+            }
         }
 
         document.getElementById('player-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const playerName = document.getElementById('player_name').value;
+            const sessionId = document.getElementById('session_id').value;
             const response = await fetch('/submit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `player_name=${encodeURIComponent(playerName)}`
+                body: `player_name=${encodeURIComponent(playerName)}&session_id=${encodeURIComponent(sessionId)}`
             });
             const data = await response.json();
             // Reload page to update UI
@@ -555,7 +603,12 @@
         });
 
         document.getElementById('reset-btn').onclick = function() {
-            fetch('/reset', {method: 'POST'})
+            const sessionId = document.getElementById('session_id').value;
+            fetch('/reset', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `session_id=${encodeURIComponent(sessionId)}`
+            })
                 .then(res => res.json())
                 .then(() => window.location.reload());
         };
@@ -568,13 +621,14 @@
 
         playerInput.addEventListener('input', async function() {
             const query = this.value.trim();
+            const sessionId = document.getElementById('session_id').value;
             if (query.length < 2) {
                 hideDropdown();
                 return;
             }
 
             try {
-                const response = await fetch(`/search_players?q=${encodeURIComponent(query)}`);
+                const response = await fetch(`/search_players?q=${encodeURIComponent(query)}&session_id=${encodeURIComponent(sessionId)}`);
                 suggestions = await response.json();
                 showDropdown(suggestions);
             } catch (error) {
@@ -640,6 +694,146 @@
                 hideDropdown();
             }
         });
+
+        // Real-time game state updates
+        const sessionId = document.getElementById('session_id').value;
+        let lastUpdate = Date.now();
+
+        async function updateGameState() {
+            try {
+                const response = await fetch(`/get_game_state/${sessionId}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    console.error('Session error:', data.error);
+                    return;
+                }
+
+                // Handle game start
+                if (data.game_started && !gameStarted) {
+                    gameStarted = true;
+                    timer = Math.max(0, Math.floor(data.turn_deadline - Date.now() / 1000));
+                    startTimer();
+                }
+
+                // Update game status
+                const gameStatusElement = document.getElementById('game-status');
+                if (gameStatusElement) {
+                    if (data.game_started) {
+                        gameStatusElement.textContent = 'Game in progress';
+                        gameStatusElement.style.color = '#4CAF50';
+                    } else {
+                        gameStatusElement.textContent = `Waiting for players... (${data.player_count}/2)`;
+                        gameStatusElement.style.color = '#ff9800';
+                    }
+                }
+
+                // Update timer
+                if (data.game_started) {
+                    const timeLeft = Math.max(0, Math.floor(data.turn_deadline - Date.now() / 1000));
+                    timer = timeLeft;
+                    updateTimerDisplay(timeLeft);
+                } else {
+                    updateTimerDisplay(0);
+                }
+
+                // Update turn indicator
+                const playerCards = document.querySelectorAll('.player-card');
+                playerCards.forEach((card, index) => {
+                    card.classList.toggle('active', index === data.turn);
+                });
+
+                // Update message if it changed
+                const messageElement = document.querySelector('.message');
+                if (messageElement && messageElement.textContent !== data.message) {
+                    messageElement.textContent = data.message;
+                    messageElement.className = `message ${data.message.includes('accepted') || data.message.includes('wins') ? 'success' : ''}`;
+                }
+
+                // Update player scores
+                const scoreElements = document.querySelectorAll('.player-card p');
+                data.players.forEach((player, index) => {
+                    if (scoreElements[index * 2]) { // Score is the second p element in each card
+                        scoreElements[index * 2].textContent = `Score: ${player.score}`;
+                    }
+                });
+
+                // Update history if it changed
+                const historyContainers = document.querySelectorAll('.history');
+                if (historyContainers.length >= 2) {
+                    // Update Player 1 history
+                    const player1History = historyContainers[0];
+                    const player1Entries = player1History.querySelectorAll('p');
+                    data.history[0].forEach((entry, index) => {
+                        if (player1Entries[index]) {
+                            player1Entries[index].textContent = `${entry.name}: ${entry.result}`;
+                        } else {
+                            const newEntry = document.createElement('p');
+                            newEntry.textContent = `${entry.name}: ${entry.result}`;
+                            player1History.appendChild(newEntry);
+                        }
+                    });
+
+                    // Update Player 2 history
+                    const player2History = historyContainers[1];
+                    const player2Entries = player2History.querySelectorAll('p');
+                    data.history[1].forEach((entry, index) => {
+                        if (player2Entries[index]) {
+                            player2Entries[index].textContent = `${entry.name}: ${entry.result}`;
+                        } else {
+                            const newEntry = document.createElement('p');
+                            newEntry.textContent = `${entry.name}: ${entry.result}`;
+                            player2History.appendChild(newEntry);
+                        }
+                    });
+                }
+
+                                 // Update prompt if it changed
+                 const promptElement = document.querySelector('.prompt');
+                 if (promptElement && data.prompt) {
+                     let promptText = '';
+                     
+                     // Helper function to convert country codes to full names
+                     function getCountryName(code) {
+                         const countryMap = {
+                             'ENG': 'England', 'FRA': 'France', 'ESP': 'Spain', 'GER': 'Germany',
+                             'ITA': 'Italy', 'NED': 'Netherlands', 'BEL': 'Belgium', 'POR': 'Portugal',
+                             'BRA': 'Brazil', 'ARG': 'Argentina', 'IRL': 'Ireland', 'SCO': 'Scotland',
+                             'WAL': 'Wales', 'SWE': 'Sweden', 'NOR': 'Norway', 'DEN': 'Denmark',
+                             'AUT': 'Austria', 'SUI': 'Switzerland', 'CZE': 'Czech Republic', 'POL': 'Poland'
+                         };
+                         return countryMap[code] || code;
+                     }
+                     
+                     if (data.prompt.type === 'club') {
+                         promptText = `Pick a player from ${data.prompt.value} who played as a `;
+                         if (data.prompt.position === 'FW') promptText += 'Forward';
+                         else if (data.prompt.position === 'DF') promptText += 'Defender';
+                         else if (data.prompt.position === 'MF') promptText += 'Midfielder';
+                         else if (data.prompt.position === 'GK') promptText += 'Goalkeeper';
+                         else promptText += data.prompt.position;
+                     } else if (data.prompt.type === 'country') {
+                         const countryName = getCountryName(data.prompt.value);
+                         promptText = `Pick a player from ${countryName} who played as a `;
+                         if (data.prompt.position === 'FW') promptText += 'Forward';
+                         else if (data.prompt.position === 'DF') promptText += 'Defender';
+                         else if (data.prompt.position === 'MF') promptText += 'Midfielder';
+                         else if (data.prompt.position === 'GK') promptText += 'Goalkeeper';
+                         else promptText += data.prompt.position;
+                     } else if (data.prompt.type === 'country_club') {
+                         const countryName = getCountryName(data.prompt.value);
+                         promptText = `Pick a player from ${countryName} who played for ${data.prompt.club}`;
+                     }
+                     promptElement.textContent = promptText;
+                 }
+
+            } catch (error) {
+                console.error('Error updating game state:', error);
+            }
+        }
+
+        // Poll for updates every 2 seconds
+        setInterval(updateGameState, 2000);
     </script>
 </body>
 </html>

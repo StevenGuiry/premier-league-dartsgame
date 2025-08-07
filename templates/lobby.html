@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premier League Darts - Lobby</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #ffffff;
+        }
+
+        .container { 
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-family: 'Orbitron', monospace;
+            color: #ff6b35;
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 20px rgba(255, 107, 53, 0.5);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .lobby-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .lobby-section h2 {
+            font-family: 'Orbitron', monospace;
+            color: #ff6b35;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .create-session {
+            text-align: center;
+        }
+
+        .create-session p {
+            font-size: 1.1em;
+            margin-bottom: 25px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            border: none;
+            border-radius: 25px;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn.secondary {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+        }
+
+        .btn.secondary:hover {
+            box-shadow: 0 6px 20px rgba(78, 205, 196, 0.4);
+        }
+
+        .session-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .session-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .session-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 107, 53, 0.3);
+        }
+
+        .session-info {
+            flex: 1;
+        }
+
+        .session-id {
+            font-family: 'Orbitron', monospace;
+            color: #ff6b35;
+            font-size: 1.3em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .session-details {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9em;
+        }
+
+        .session-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4CAF50;
+        }
+
+        .status-indicator.waiting {
+            background: #ff9800;
+        }
+
+        .status-indicator.full {
+            background: #f44336;
+        }
+
+        .no-sessions {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            font-style: italic;
+            padding: 40px;
+        }
+
+        .rules-box {
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(247, 147, 30, 0.1));
+            border: 2px solid rgba(255, 107, 53, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .rules-box h3 {
+            font-family: 'Orbitron', monospace;
+            color: #ff6b35;
+            font-size: 1.4em;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .rules-content {
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.6;
+        }
+
+        .rules-content ul {
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+
+        .rules-content li {
+            margin-bottom: 8px;
+        }
+
+        .rules-content strong {
+            color: #ff6b35;
+        }
+
+        .refresh-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 8px 15px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 2.2em;
+                letter-spacing: 2px;
+            }
+
+            .header p {
+                font-size: 1em;
+            }
+
+            .rules-box {
+                padding: 20px;
+            }
+
+            .rules-box h3 {
+                font-size: 1.2em;
+            }
+
+            .rules-content {
+                font-size: 0.95em;
+            }
+
+            .lobby-section {
+                padding: 20px;
+            }
+
+            .lobby-section h2 {
+                font-size: 1.5em;
+            }
+
+            .session-item {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .session-status {
+                justify-content: center;
+            }
+
+            .btn {
+                padding: 12px 30px;
+                font-size: 1em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .lobby-section {
+                padding: 15px;
+            }
+
+            .session-item {
+                padding: 15px;
+            }
+
+            .session-id {
+                font-size: 1.1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Premier League Darts</h1>
+            <p>Create or join a game session to start playing</p>
+        </div>
+
+        <div class="lobby-section create-session">
+            <h2>Create New Game</h2>
+            <p>Start a new game session and share the session ID with your opponent</p>
+            <form method="POST" action="/create_session">
+                <button type="submit" class="btn">Create New Session</button>
+            </form>
+        </div>
+
+        <div class="lobby-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>Available Sessions</h2>
+                <button class="refresh-btn" onclick="location.reload()">Refresh</button>
+            </div>
+            
+            <div class="session-list">
+                {% if sessions %}
+                    {% for session_id, game_state in sessions.items() %}
+                        <div class="session-item">
+                            <div class="session-info">
+                                <div class="session-id">Session: {{ session_id }}</div>
+                                <div class="session-details">
+                                    Created: {{ game_state.created_at.strftime('%H:%M') }} | 
+                                    Players: {{ game_state.player_count }}/{{ game_state.max_players }}
+                                </div>
+                            </div>
+                            <div class="session-status">
+                                <div class="status-indicator {% if game_state.player_count >= game_state.max_players %}full{% elif game_state.player_count == 0 %}waiting{% endif %}"></div>
+                                {% if game_state.player_count >= game_state.max_players %}
+                                    <span style="color: #f44336;">Full</span>
+                                {% elif game_state.player_count == 0 %}
+                                    <span style="color: #ff9800;">Waiting</span>
+                                {% else %}
+                                    <span style="color: #4CAF50;">Ready</span>
+                                {% endif %}
+                                {% if game_state.player_count < game_state.max_players %}
+                                    <a href="/join_session/{{ session_id }}" class="btn secondary">Join</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-sessions">
+                        No active sessions available. Create a new one to get started!
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="rules-box">
+            <h3>How to Play</h3>
+            <div class="rules-content">
+                <p><strong>Premier League Darts</strong> combines football knowledge with darts scoring!</p>
+                
+                <ul>
+                    <li><strong>Objective:</strong> Be the first player to reach exactly 0 points (or closest to 0 without going below -20)</li>
+                    <li><strong>Starting Score:</strong> Both players begin with 501 points</li>
+                    <li><strong>Gameplay:</strong> Each turn, you'll get a prompt asking you to name a football player with specific criteria</li>
+                    <li><strong>Scoring:</strong> The player's Premier League appearances become your darts score for that turn</li>
+                    <li><strong>Valid Scores:</strong> Only players with 180 or fewer appearances and valid darts scores are accepted</li>
+                    <li><strong>Turn Time:</strong> You have 60 seconds to submit a valid player name</li>
+                    <li><strong>Winning:</strong> First player to reach 0 (or closest to 0, minimum -20) wins the game!</li>
+                </ul>
+
+                <p><strong>Example:</strong> If the prompt asks for "a Forward from England" and you choose "Harry Kane" with 180 appearances, you score 180 points and your opponent's turn begins.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-refresh the page every 30 seconds to show new sessions
+        setTimeout(() => {
+            location.reload();
+        }, 30000);
+    </script>
+</body>
+</html>
