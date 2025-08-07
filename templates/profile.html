@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premier League Darts - Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #ffffff;
+        }
+
+        .container { 
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-family: 'Orbitron', monospace;
+            color: #ff6b35;
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 20px rgba(255, 107, 53, 0.5);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 15px 25px;
+        }
+
+        .nav-bar .user-info {
+            font-weight: 500;
+            color: #4ecdc4;
+        }
+
+        .nav-bar .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-bar .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-bar .nav-links a.logout {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+        }
+
+        .nav-bar .nav-links a.logout:hover {
+            background: rgba(244, 67, 54, 0.3);
+        }
+
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .profile-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .profile-section h2 {
+            font-family: 'Orbitron', monospace;
+            color: #ff6b35;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #4ecdc4;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .achievements-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .achievement {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
+            border: 2px solid rgba(255, 193, 7, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .achievement:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 193, 7, 0.2);
+        }
+
+        .achievement-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .achievement-name {
+            font-weight: 600;
+            color: #ffc107;
+            margin-bottom: 5px;
+        }
+
+        .achievement-desc {
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .recent-games {
+            grid-column: 1 / -1;
+        }
+
+        .game-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .game-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 107, 53, 0.3);
+        }
+
+        .game-info {
+            flex: 1;
+        }
+
+        .game-date {
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 5px;
+        }
+
+        .game-opponent {
+            font-weight: 500;
+            color: #4ecdc4;
+            margin-bottom: 5px;
+        }
+
+        .game-session {
+            font-size: 0.8em;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .game-result {
+            text-align: right;
+        }
+
+        .game-score {
+            font-size: 1.5em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .game-score.win {
+            color: #4CAF50;
+        }
+
+        .game-score.loss {
+            color: #f44336;
+        }
+
+        .game-status {
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .game-status.win {
+            color: #4CAF50;
+        }
+
+        .game-status.loss {
+            color: #f44336;
+        }
+
+        .no-games {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            font-style: italic;
+            padding: 40px;
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 2.2em;
+                letter-spacing: 2px;
+            }
+
+            .header p {
+                font-size: 1em;
+            }
+
+            .nav-bar {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .nav-bar .nav-links a {
+                margin: 0 10px;
+            }
+
+            .profile-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .achievements-list {
+                grid-template-columns: 1fr;
+            }
+
+            .game-item {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+
+            .game-result {
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .profile-section {
+                padding: 20px;
+            }
+
+            .profile-section h2 {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Player Profile</h1>
+            <p>Track your progress and achievements</p>
+        </div>
+
+        <div class="nav-bar">
+            <div class="user-info">
+                Welcome, <strong>{{ user.username }}</strong>
+            </div>
+            <div class="nav-links">
+                <a href="/lobby">Lobby</a>
+                <a href="/logout" class="logout">Logout</a>
+            </div>
+        </div>
+
+        <div class="profile-grid">
+            <div class="profile-section">
+                <h2>Statistics</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value">{{ user.stats.games_played }}</div>
+                        <div class="stat-label">Games Played</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ user.stats.games_won }}</div>
+                        <div class="stat-label">Games Won</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ "%.1f"|format(user.stats.average_score) }}</div>
+                        <div class="stat-label">Avg Score</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ user.stats.best_score }}</div>
+                        <div class="stat-label">Best Score</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ "%.1f"|format(user.stats.average_turns_per_game) }}</div>
+                        <div class="stat-label">Avg Turns</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ user.stats.perfect_games }}</div>
+                        <div class="stat-label">Perfect Games</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-section">
+                <h2>Achievements</h2>
+                {% if user.achievements %}
+                    <div class="achievements-list">
+                        {% for achievement in user.achievements %}
+                            <div class="achievement">
+                                <div class="achievement-icon">
+                                    {% if achievement == 'first_win' %}🏆
+                                    {% elif achievement == 'dedicated_player' %}🎯
+                                    {% elif achievement == 'perfect_game' %}⭐
+                                    {% elif achievement == 'consistent_winner' %}👑
+                                    {% elif achievement == 'sharp_shooter' %}🎪
+                                    {% else %}🏅{% endif %}
+                                </div>
+                                <div class="achievement-name">
+                                    {% if achievement == 'first_win' %}First Win
+                                    {% elif achievement == 'dedicated_player' %}Dedicated Player
+                                    {% elif achievement == 'perfect_game' %}Perfect Game
+                                    {% elif achievement == 'consistent_winner' %}Consistent Winner
+                                    {% elif achievement == 'sharp_shooter' %}Sharp Shooter
+                                    {% else %}{{ achievement|title }}{% endif %}
+                                </div>
+                                <div class="achievement-desc">
+                                    {% if achievement == 'first_win' %}Win your first game
+                                    {% elif achievement == 'dedicated_player' %}Play 10 games
+                                    {% elif achievement == 'perfect_game' %}Win with 0 score
+                                    {% elif achievement == 'consistent_winner' %}Win 5 games
+                                    {% elif achievement == 'sharp_shooter' %}Maintain low average score
+                                    {% else %}Achievement unlocked{% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="no-games">
+                        No achievements yet. Keep playing to earn them!
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="profile-section recent-games">
+                <h2>Recent Games</h2>
+                {% if user.recent_games %}
+                    {% for game in user.recent_games %}
+                        <div class="game-item">
+                            <div class="game-info">
+                                <div class="game-date">{{ game.date.split('T')[0] }}</div>
+                                <div class="game-opponent">vs {{ game.opponent }}</div>
+                                <div class="game-session">Session: {{ game.session_id }}</div>
+                            </div>
+                            <div class="game-result">
+                                <div class="game-score {% if game.won %}win{% else %}loss{% endif %}">
+                                    {{ game.final_score }}
+                                </div>
+                                <div class="game-status {% if game.won %}win{% else %}loss{% endif %}">
+                                    {% if game.won %}WIN{% else %}LOSS{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-games">
+                        No games played yet. Start your first game!
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

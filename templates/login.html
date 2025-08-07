@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premier League Darts - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #ffffff;
+        }
+
+        .container { 
+            max-width: 500px;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .header {
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-family: 'Orbitron', monospace;
+            color: #ff6b35;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 20px rgba(255, 107, 53, 0.5);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #ff6b35;
+            box-shadow: 0 0 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            border: none;
+            border-radius: 25px;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.1), rgba(68, 160, 141, 0.1));
+            border: 2px solid rgba(78, 205, 196, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .info-box h3 {
+            font-family: 'Orbitron', monospace;
+            color: #4ecdc4;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-box ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .info-box li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .info-box li:before {
+            content: "•";
+            color: #4ecdc4;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .login-card {
+                padding: 30px 20px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+                letter-spacing: 2px;
+            }
+
+            .header p {
+                font-size: 1em;
+            }
+
+            .btn {
+                padding: 12px 30px;
+                font-size: 1em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .login-card {
+                padding: 25px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="login-card">
+            <div class="header">
+                <h1>Premier League Darts</h1>
+                <p>Enter your username to start playing and track your progress!</p>
+            </div>
+
+            <form method="POST" action="/login">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Enter your username" required>
+                </div>
+                <button type="submit" class="btn">Start Playing</button>
+            </form>
+
+            <div class="info-box">
+                <h3>Profile Features</h3>
+                <ul>
+                    <li>Track your game statistics and win/loss record</li>
+                    <li>View your recent games and achievements</li>
+                    <li>Monitor your best scores and performance trends</li>
+                    <li>Earn achievements for milestones and perfect games</li>
+                    <li>Your profile is automatically created on first login</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

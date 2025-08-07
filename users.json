@@ -1,0 +1,60 @@
+{
+  "026f911b-49f1-4293-b92e-f3f7b84c1d20": {
+    "username": "SGUIRY",
+    "created_at": "2025-08-07T22:37:43.017976",
+    "stats": {
+      "games_played": 1,
+      "games_won": 1,
+      "games_lost": 0,
+      "total_score": -3,
+      "average_score": -3.0,
+      "best_score": -3,
+      "worst_score": 501,
+      "total_turns": 11,
+      "average_turns_per_game": 11.0,
+      "forfeits": 0,
+      "perfect_games": 0
+    },
+    "recent_games": [
+      {
+        "date": "2025-08-07T22:49:30.726906",
+        "session_id": "96d78bd0",
+        "opponent": "Player 2",
+        "final_score": -3,
+        "won": true,
+        "turns_played": 11
+      }
+    ],
+    "achievements": [
+      "first_win"
+    ]
+  },
+  "d4e5d796-7f35-432c-a85e-3155586e30d1": {
+    "username": "testuser",
+    "created_at": "2025-08-07T22:38:31.429362",
+    "stats": {
+      "games_played": 1,
+      "games_won": 0,
+      "games_lost": 1,
+      "total_score": 380,
+      "average_score": 380.0,
+      "best_score": 380,
+      "worst_score": 501,
+      "total_turns": 1,
+      "average_turns_per_game": 1.0,
+      "forfeits": 0,
+      "perfect_games": 0
+    },
+    "recent_games": [
+      {
+        "date": "2025-08-07T22:49:30.742912",
+        "session_id": "96d78bd0",
+        "opponent": "Player 1",
+        "final_score": 380,
+        "won": false,
+        "turns_played": 1
+      }
+    ],
+    "achievements": []
+  }
+}

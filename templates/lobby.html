@@ -243,6 +243,16 @@
                 font-size: 1em;
             }
 
+            .header .user-info {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .header .user-info > div:first-child {
+                text-align: center;
+            }
+
             .rules-box {
                 padding: 20px;
             }
@@ -303,6 +313,22 @@
         <div class="header">
             <h1>Premier League Darts</h1>
             <p>Create or join a game session to start playing</p>
+            {% if user %}
+            <div style="margin-top: 20px; padding: 15px; background: rgba(78, 205, 196, 0.1); border-radius: 10px; border: 1px solid rgba(78, 205, 196, 0.3);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: 600; color: #4ecdc4; margin-bottom: 5px;">Welcome, {{ user.username }}!</div>
+                        <div style="font-size: 0.9em; color: rgba(255, 255, 255, 0.8);">
+                            Games: {{ user.stats.games_played }} | Wins: {{ user.stats.games_won }} | Best Score: {{ user.stats.best_score }}
+                        </div>
+                    </div>
+                    <div>
+                        <a href="/profile" style="background: linear-gradient(45deg, #4ecdc4, #44a08d); border: none; border-radius: 20px; padding: 8px 20px; font-size: 0.9em; font-weight: 600; color: white; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3); text-decoration: none; display: inline-block;">Profile</a>
+                        <a href="/logout" style="background: rgba(244, 67, 54, 0.2); border: 1px solid rgba(244, 67, 54, 0.3); border-radius: 20px; padding: 8px 20px; font-size: 0.9em; font-weight: 600; color: white; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; display: inline-block; margin-left: 10px;">Logout</a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
 
         <div class="lobby-section create-session">

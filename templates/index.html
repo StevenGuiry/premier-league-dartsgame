@@ -163,6 +163,25 @@
             box-shadow: 0 0 20px rgba(255, 107, 53, 0.3);
         }
 
+        #player_name:disabled {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+            cursor: not-allowed;
+        }
+
+        button:disabled {
+            background: linear-gradient(45deg, #666, #888) !important;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        button:disabled:hover {
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
         button {
             background: linear-gradient(45deg, #ff6b35, #f7931e);
             border: none;
@@ -449,7 +468,7 @@
 <body>
     <div class="container">
         <div class="history">
-            <h3>Player 1 History</h3>
+            <h3>{{ players[0].name }} History</h3>
             {% for entry in history[0] %}
                 <p>{{ entry.name }}: {{ entry.result }}</p>
             {% endfor %}
@@ -544,12 +563,13 @@
             <div class="message {% if 'accepted' in message or 'wins' in message %}success{% endif %}">{{ message | safe }}</div>
             <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
                 <button id="reset-btn">Reset Game</button>
+                <button id="leave-btn" style="background: linear-gradient(45deg, #e74c3c, #c0392b) !important;">Leave Game</button>
                 <a href="/lobby" class="back-to-lobby">Back to Lobby</a>
             </div>
             <div id="timer" style="font-size: 24px; margin-top: 10px;">Waiting for players...</div>
         </div>
         <div class="history">
-            <h3>Player 2 History</h3>
+            <h3>{{ players[1].name }} History</h3>
             {% for entry in history[1] %}
                 <p>{{ entry.name }}: {{ entry.result }}</p>
             {% endfor %}
@@ -611,6 +631,21 @@
             })
                 .then(res => res.json())
                 .then(() => window.location.reload());
+        };
+
+        document.getElementById('leave-btn').onclick = function() {
+            const sessionId = document.getElementById('session_id').value;
+            fetch('/leave_session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `session_id=${encodeURIComponent(sessionId)}`
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = data.redirect;
+                    }
+                });
         };
 
         // Autocomplete functionality
@@ -728,6 +763,25 @@
                     }
                 }
 
+                // Check if Player 2 is a placeholder and disable form if so
+                const playerForm = document.getElementById('player-form');
+                const playerInput = document.getElementById('player_name');
+                const submitButton = playerForm.querySelector('button[type="submit"]');
+                
+                if (data.players[1] && data.players[1].name === 'Player 2') {
+                    // Player 2 is a placeholder, disable the form
+                    playerInput.disabled = true;
+                    playerInput.placeholder = 'Waiting for Player 2 to join...';
+                    submitButton.disabled = true;
+                    submitButton.textContent = 'Waiting for Player 2';
+                } else {
+                    // Player 2 has joined, enable the form
+                    playerInput.disabled = false;
+                    playerInput.placeholder = 'Enter player name';
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Submit';
+                }
+
                 // Update timer
                 if (data.game_started) {
                     const timeLeft = Math.max(0, Math.floor(data.turn_deadline - Date.now() / 1000));
@@ -761,6 +815,16 @@
                 // Update history if it changed
                 const historyContainers = document.querySelectorAll('.history');
                 if (historyContainers.length >= 2) {
+                    // Update history headers with player names
+                    const player1HistoryHeader = historyContainers[0].querySelector('h3');
+                    const player2HistoryHeader = historyContainers[1].querySelector('h3');
+                    if (player1HistoryHeader && data.players[0]) {
+                        player1HistoryHeader.textContent = `${data.players[0].name} History`;
+                    }
+                    if (player2HistoryHeader && data.players[1]) {
+                        player2HistoryHeader.textContent = `${data.players[1].name} History`;
+                    }
+                    
                     // Update Player 1 history
                     const player1History = historyContainers[0];
                     const player1Entries = player1History.querySelectorAll('p');

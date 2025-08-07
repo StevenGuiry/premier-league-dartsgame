@@ -6,9 +6,200 @@ import uuid
 from typing import List, Dict, Set
 from collections import Counter
 from datetime import datetime, timedelta
+import os
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-this-in-production'  # Change this in production
+
+# User profiles storage
+USERS_FILE = 'users.json'
+
+def load_users() -> Dict:
+    """Load user profiles from JSON file"""
+    if os.path.exists(USERS_FILE):
+        try:
+            with open(USERS_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except:
+            return {}
+    return {}
+
+def save_users(users: Dict):
+    """Save user profiles to JSON file"""
+    with open(USERS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(users, f, indent=2, default=str)
+
+def create_user_profile(username: str) -> Dict:
+    """Create a new user profile"""
+    return {
+        'username': username,
+        'created_at': datetime.now().isoformat(),
+        'stats': {
+            'games_played': 0,
+            'games_won': 0,
+            'games_lost': 0,
+            'total_score': 0,
+            'average_score': 0,
+            'best_score': 501,
+            'worst_score': 501,
+            'total_turns': 0,
+            'average_turns_per_game': 0,
+            'forfeits': 0,
+            'perfect_games': 0  # Games won with 0 score
+        },
+        'recent_games': [],  # Last 10 games
+        'achievements': []
+    }
+
+def update_user_stats(user_id: str, game_result: Dict):
+    """Update user statistics after a game"""
+    users = load_users()
+    if user_id not in users:
+        return
+    
+    user = users[user_id]
+    stats = user['stats']
+    
+    # Update basic stats
+    stats['games_played'] += 1
+    
+    if game_result['won']:
+        stats['games_won'] += 1
+        if game_result['final_score'] == 0:
+            stats['perfect_games'] += 1
+    else:
+        stats['games_lost'] += 1
+    
+    # Update score stats
+    final_score = game_result['final_score']
+    stats['total_score'] += final_score
+    stats['average_score'] = stats['total_score'] / stats['games_played']
+    
+    if final_score < stats['best_score']:
+        stats['best_score'] = final_score
+    if final_score > stats['worst_score']:
+        stats['worst_score'] = final_score
+    
+    # Update turn stats
+    turns_played = game_result.get('turns_played', 0)
+    stats['total_turns'] += turns_played
+    stats['average_turns_per_game'] = stats['total_turns'] / stats['games_played']
+    
+    if game_result.get('forfeited'):
+        stats['forfeits'] += 1
+    
+    # Add to recent games
+    recent_game = {
+        'date': datetime.now().isoformat(),
+        'session_id': game_result['session_id'],
+        'opponent': game_result['opponent'],
+        'final_score': final_score,
+        'won': game_result['won'],
+        'turns_played': turns_played
+    }
+    
+    user['recent_games'].insert(0, recent_game)
+    user['recent_games'] = user['recent_games'][:10]  # Keep only last 10
+    
+    # Check for achievements
+    check_achievements(user)
+    
+    save_users(users)
+
+def check_achievements(user: Dict):
+    """Check and award achievements"""
+    stats = user['stats']
+    achievements = user['achievements']
+    
+    # First win
+    if stats['games_won'] == 1 and 'first_win' not in achievements:
+        achievements.append('first_win')
+    
+    # 10 games played
+    if stats['games_played'] >= 10 and 'dedicated_player' not in achievements:
+        achievements.append('dedicated_player')
+    
+    # Perfect game
+    if stats['perfect_games'] >= 1 and 'perfect_game' not in achievements:
+        achievements.append('perfect_game')
+    
+    # 5 wins
+    if stats['games_won'] >= 5 and 'consistent_winner' not in achievements:
+        achievements.append('consistent_winner')
+    
+    # Low average score (good player)
+    if stats['average_score'] <= 100 and stats['games_played'] >= 5 and 'sharp_shooter' not in achievements:
+        achievements.append('sharp_shooter')
+
+def end_game_and_update_stats(session_id: str, winner_index: int = None):
+    """End game and update statistics for both players"""
+    if session_id not in game_sessions:
+        return
+    
+    game_state = game_sessions[session_id]
+    
+    # Determine winner if not specified
+    if winner_index is None:
+        if game_state['players'][0]['score'] <= 0:
+            winner_index = 0
+        elif game_state['players'][1]['score'] <= 0:
+            winner_index = 1
+        else:
+            # Game ended without clear winner (timeout, etc.)
+            return
+    
+    # Update statistics for both players
+    for i in range(2):
+        user_id = game_state['user_ids'][i]
+        if user_id:
+            opponent_name = game_state['players'][1-i]['name']
+            
+            game_result = {
+                'won': (i == winner_index),
+                'final_score': game_state['players'][i]['score'],
+                'session_id': session_id,
+                'opponent': opponent_name,
+                'turns_played': game_state['turn_count'][i],
+                'forfeited': False  # Will be set by forfeit handler
+            }
+            
+            update_user_stats(user_id, game_result)
+
+def handle_user_leave_session(user_id: str, session_id: str):
+    """Handle when a user leaves a game session"""
+    if session_id not in game_sessions:
+        return
+    
+    game_state = game_sessions[session_id]
+    
+    # Find which player slot the user was in
+    player_index = None
+    for i, uid in enumerate(game_state['user_ids']):
+        if uid == user_id:
+            player_index = i
+            break
+    
+    if player_index is None:
+        return
+    
+    # Clear the user's slot
+    game_state['user_ids'][player_index] = None
+    game_state['player_count'] -= 1
+    
+    # If Player 2 left, revert to placeholder
+    if player_index == 1:
+        game_state['players'][1]['name'] = 'Player 2'
+        game_state['game_started'] = False
+        game_state['turn_deadline'] = None
+        game_state['message'] = f"{game_state['players'][0]['name']} is waiting for another player to join..."
+    
+    # If Player 1 left, end the session
+    elif player_index == 0:
+        # Remove the session entirely if Player 1 leaves
+        del game_sessions[session_id]
+        return
+    
+    game_state['last_activity'] = datetime.now()
 
 # Load players data
 def load_players_data(file_path: str = "players_pl.json") -> List[Dict]:
@@ -92,7 +283,9 @@ def create_new_session() -> str:
         'last_activity': datetime.now(),
         'player_count': 0,
         'max_players': 2,
-        'game_started': False  # Track if game has started
+        'game_started': False,  # Track if game has started
+        'user_ids': [None, None],  # Track user IDs for statistics
+        'turn_count': [0, 0]  # Track turns per player
     }
     
     # Set initial prompt
@@ -139,41 +332,124 @@ def cleanup_old_sessions():
 
 @app.route('/')
 def index():
-    """Main page - redirect to session creation or show session list"""
+    """Main page - redirect to profile or lobby"""
     cleanup_old_sessions()
     
     # If user has a session, redirect to it
     if 'session_id' in session and session['session_id'] in game_sessions:
         return redirect(url_for('game', session_id=session['session_id']))
     
-    # Show session creation/joining page
-    return render_template('lobby.html', sessions=game_sessions)
+    # If user is logged in, show lobby
+    if 'user_id' in session:
+        return redirect(url_for('lobby'))
+    
+    # Show login/register page
+    return render_template('login.html')
 
 @app.route('/lobby')
 def lobby():
-    """Clear session and return to lobby"""
-    # Clear the user's session
-    session.pop('session_id', None)
-    session.pop('player_number', None)
+    """Show lobby for logged in users"""
+    if 'user_id' not in session:
+        return redirect(url_for('index'))
+    
+    # Check if user was in a game session and left
+    if 'session_id' in session:
+        handle_user_leave_session(session['user_id'], session['session_id'])
+        # Clear the session from user's session data
+        session.pop('session_id', None)
+        session.pop('player_number', None)
     
     cleanup_old_sessions()
-    return render_template('lobby.html', sessions=game_sessions)
+    users = load_users()
+    user = users.get(session['user_id'], {})
+    return render_template('lobby.html', sessions=game_sessions, user=user)
+
+@app.route('/profile')
+def profile():
+    """Show user profile"""
+    if 'user_id' not in session:
+        return redirect(url_for('index'))
+    
+    # Check if user was in a game session and left
+    if 'session_id' in session:
+        handle_user_leave_session(session['user_id'], session['session_id'])
+        # Clear the session from user's session data
+        session.pop('session_id', None)
+        session.pop('player_number', None)
+    
+    users = load_users()
+    user = users.get(session['user_id'])
+    if not user:
+        return redirect(url_for('index'))
+    
+    return render_template('profile.html', user=user)
+
+@app.route('/login', methods=['POST'])
+def login():
+    """Handle user login"""
+    username = request.form.get('username', '').strip()
+    if not username:
+        return redirect(url_for('index'))
+    
+    users = load_users()
+    
+    # Check if user exists
+    user_id = None
+    for uid, user in users.items():
+        if user['username'].lower() == username.lower():
+            user_id = uid
+            break
+    
+    # Create new user if doesn't exist
+    if not user_id:
+        user_id = str(uuid.uuid4())
+        users[user_id] = create_user_profile(username)
+        save_users(users)
+    
+    # Set session
+    session['user_id'] = user_id
+    return redirect(url_for('lobby'))
+
+@app.route('/logout')
+def logout():
+    """Logout user"""
+    # Check if user was in a game session and left
+    if 'session_id' in session and 'user_id' in session:
+        handle_user_leave_session(session['user_id'], session['session_id'])
+    
+    session.clear()
+    return redirect(url_for('index'))
 
 @app.route('/create_session', methods=['POST'])
 def create_session():
     """Create a new game session"""
+    if 'user_id' not in session:
+        return redirect(url_for('index'))
+    
     session_id = create_new_session()
     session['session_id'] = session_id
     session['player_number'] = 1  # First player to join
     
+    # Store user ID in game state
+    game_state = game_sessions[session_id]
+    game_state['user_ids'][0] = session['user_id']
+    
+    # Update player name with username
+    users = load_users()
+    user = users.get(session['user_id'], {})
+    game_state['players'][0]['name'] = user.get('username', 'Player 1')
+    
     # Increment player count
-    game_sessions[session_id]['player_count'] += 1
+    game_state['player_count'] += 1
     
     return redirect(url_for('game', session_id=session_id))
 
 @app.route('/join_session/<session_id>')
 def join_session(session_id):
     """Join an existing game session"""
+    if 'user_id' not in session:
+        return redirect(url_for('index'))
+    
     if session_id not in game_sessions:
         return redirect(url_for('index'))
     
@@ -186,6 +462,15 @@ def join_session(session_id):
     session['session_id'] = session_id
     session['player_number'] = game_state['player_count'] + 1
     
+    # Store user ID in game state
+    player_index = game_state['player_count']
+    game_state['user_ids'][player_index] = session['user_id']
+    
+    # Update player name with username
+    users = load_users()
+    user = users.get(session['user_id'], {})
+    game_state['players'][player_index]['name'] = user.get('username', f'Player {player_index + 1}')
+    
     # Increment player count
     game_state['player_count'] += 1
     game_state['last_activity'] = datetime.now()
@@ -194,7 +479,7 @@ def join_session(session_id):
     if game_state['player_count'] == game_state['max_players'] and not game_state['game_started']:
         game_state['game_started'] = True
         game_state['turn_deadline'] = time.time() + 60
-        game_state['message'] = "Game started! Player 1's turn."
+        game_state['message'] = f"Game started! {game_state['players'][0]['name']}'s turn."
     
     return redirect(url_for('game', session_id=session_id))
 
@@ -293,6 +578,9 @@ def handle_pick():
     # Mark player as selected so they can't be picked again
     game_state['selected_players'].add(player_entry['name'])
 
+    # Track turn count for statistics
+    game_state['turn_count'][game_state['turn']] += 1
+
     game_state['history'][game_state['turn']].append({'name': player_entry['name'], 'result': player_entry['apps']})
     new_score = game_state['players'][game_state['turn']]['score'] - player_entry['apps']
 
@@ -310,17 +598,22 @@ def handle_pick():
     
     if won:
         game_state['message'] = f"{game_state['players'][game_state['turn']]['name']} wins!\n\n {info_str}"
+        # Update statistics for both players
+        end_game_and_update_stats(session_id, game_state['turn'])
     else:
         game_state['message'] = f"{player_entry['name']} accepted: -{player_entry['apps']}\n\n {info_str}"
 
     if not won:
         game_state['turn'] = (game_state['turn'] + 1) % 2
     else:
-        # Reset game after a win
-        game_state['players'] = [{'name': 'Player 1', 'score': 501}, {'name': 'Player 2', 'score': 501}]
+        # Reset game after a win - preserve usernames
+        player1_name = game_state['players'][0]['name']
+        player2_name = game_state['players'][1]['name']
+        game_state['players'] = [{'name': player1_name, 'score': 501}, {'name': player2_name, 'score': 501}]
         game_state['turn'] = 0
         game_state['history'] = [[], []]
         game_state['selected_players'].clear()
+        game_state['turn_count'] = [0, 0]  # Reset turn counts
         set_random_prompt_for_session(game_state)
 
     return jsonify({
@@ -341,9 +634,13 @@ def reset_game():
     game_state = game_sessions[session_id]
     game_state['last_activity'] = datetime.now()
     
-    game_state['players'] = [{'name': 'Player 1', 'score': 501}, {'name': 'Player 2', 'score': 501}]
+    # Preserve usernames when resetting
+    player1_name = game_state['players'][0]['name']
+    player2_name = game_state['players'][1]['name']
+    game_state['players'] = [{'name': player1_name, 'score': 501}, {'name': player2_name, 'score': 501}]
     game_state['turn'] = 0
     game_state['history'] = [[], []]
+    game_state['turn_count'] = [0, 0]  # Reset turn counts
     set_random_prompt_for_session(game_state)
     game_state['message'] = "Game has been reset!"
     game_state['selected_players'].clear()  # Clear selected players on reset
@@ -391,6 +688,24 @@ def forfeit_turn():
         'turn_deadline': game_state['turn_deadline'],
         'game_started': game_state['game_started']
     })
+
+@app.route('/leave_session', methods=['POST'])
+def leave_session():
+    """Handle when a user explicitly leaves a game session"""
+    if 'user_id' not in session or 'session_id' not in session:
+        return jsonify({'error': 'Not in a session'})
+    
+    session_id = session['session_id']
+    user_id = session['user_id']
+    
+    # Handle the user leaving
+    handle_user_leave_session(user_id, session_id)
+    
+    # Clear session data
+    session.pop('session_id', None)
+    session.pop('player_number', None)
+    
+    return jsonify({'success': True, 'redirect': url_for('lobby')})
 
 @app.route('/search_players')
 def search_players():
