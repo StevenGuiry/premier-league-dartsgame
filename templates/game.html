@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Game {{ code }} — Premier League Darts{% endblock %}
+
+{% block content %}
+<div class="game-wrap" id="game-root">
+    <!-- Player 0 history (left) -->
+    <div class="history-panel" id="history-0">
+        <h3 id="history-0-title">Player 1</h3>
+        <div id="history-0-entries"></div>
+    </div>
+
+    <!-- Centre panel -->
+    <div class="game-center">
+        <div class="session-info">
+            <div>Session: <span class="session-code">{{ code }}</span></div>
+            <div class="session-status" id="session-status">Connecting...</div>
+        </div>
+
+        <h2 class="page-title orbitron">Premier League Darts</h2>
+
+        <div class="prompt-box" id="prompt-box">Loading prompt...</div>
+
+        <div class="player-cards" id="player-cards"></div>
+
+        <div class="input-group">
+            <div class="autocomplete-container">
+                <input type="text" id="player_name"
+                       placeholder="Enter footballer name" autocomplete="off"
+                       disabled>
+                <div id="autocomplete-dropdown" class="autocomplete-dropdown"></div>
+            </div>
+            <button class="btn" id="submit-btn" disabled>Submit</button>
+        </div>
+
+        <div class="message-box" id="message-box"></div>
+
+        <div id="timer">Waiting for players...</div>
+
+        <div class="game-actions">
+            <button class="btn btn-teal" id="rematch-btn" style="display:none">Rematch</button>
+            <button class="btn btn-danger" id="leave-btn">Leave Game</button>
+            <a href="{{ url_for('main.lobby') }}" class="btn btn-teal">Back to Lobby</a>
+        </div>
+    </div>
+
+    <!-- Player 1 history (right) -->
+    <div class="history-panel" id="history-1">
+        <h3 id="history-1-title">Player 2</h3>
+        <div id="history-1-entries"></div>
+    </div>
+</div>
+
+<!-- Pass initial state and meta to JS -->
+<script type="application/json" id="init-data">{
+    "code": {{ code | tojson }},
+    "myUserId": {{ user.id }},
+    "myUsername": {{ user.username | tojson }},
+    "startScore": {{ start_score }},
+    "initialState": {{ initial_state | safe }}
+}</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/game.js') }}"></script>
+{% endblock %}
