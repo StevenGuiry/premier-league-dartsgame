@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Premier League Darts{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+{% if current_user %}
+<nav>
+    <span class="nav-brand">PL Darts</span>
+    <div class="nav-links">
+        <a href="{{ url_for('main.lobby') }}">Lobby</a>
+        <a href="{{ url_for('main.profile') }}">Profile</a>
+        {% if current_user.is_admin %}
+            <a href="{{ url_for('main.admin_refresh_page') }}">Admin</a>
+        {% endif %}
+        <a href="{{ url_for('main.logout') }}">Logout</a>
+    </div>
+</nav>
+{% endif %}
+
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<ul class="flash-list" style="padding:10px 20px">
+    {% for msg in messages %}
+    <li class="flash-msg">{{ msg }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+{% endwith %}
+
+{% block content %}{% endblock %}
+
+{% block scripts %}{% endblock %}
+</body>
+</html>
