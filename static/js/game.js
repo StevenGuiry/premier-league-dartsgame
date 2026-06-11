@@ -281,7 +281,13 @@
             const secs = Math.max(0, Math.ceil(deadline - Date.now() / 1000));
             timerEl.textContent = secs + 's';
             timerEl.classList.toggle('urgent', secs <= 10);
-            if (secs <= 0) stopCountdown();
+            if (secs <= 0) {
+                stopCountdown();
+                // Safety net: the server forfeits/advances on expiry. If that
+                // event was missed (or our clock is ahead), pull fresh state so
+                // we never stall at 0.
+                if (!gameOver) socket.emit('request_state', { code: CODE });
+            }
         }
     }
     function stopCountdown() {
@@ -373,7 +379,11 @@
     });
 
     // ── Helpers ───────────────────────────────────────────────
-    function enableInput()  { inputEl.disabled = false; submitBtn.disabled = false; inputEl.focus(); }
+    function enableInput()  {
+        const wasDisabled = inputEl.disabled;
+        inputEl.disabled = false; submitBtn.disabled = false;
+        if (wasDisabled) inputEl.focus();  // only on transition — avoids re-popping mobile keyboard
+    }
     function disableInput() { inputEl.disabled = true;  submitBtn.disabled = true; }
 
     function setStatus(text, color) {

@@ -109,6 +109,19 @@ def on_leave_lobby():
 # Game events
 # ---------------------------------------------------------------------------
 
+@socketio.on('request_state')
+def on_request_state(data):
+    """Re-send the authoritative state to one client without reconnect side
+    effects. Used by the client as a safety net when its turn timer hits 0."""
+    uid = _current_user_id()
+    if not uid:
+        return
+    code = data.get('code', '').upper()
+    game = get_game(code)
+    if game and game.seat_for_user(uid) is not None:
+        emit('game_state', game.to_dict())
+
+
 @socketio.on('join_game')
 def on_join_game(data):
     from flask import current_app
@@ -525,10 +538,13 @@ def _handle_disconnect_timeout(code: str, seat_idx: int,
             _broadcast_lobby(app)
             return
 
-        # Multiplayer — opponent wins
+        # Multiplayer — opponent wins (mirror on_leave_game so the win is
+        # actually credited: set winner score to 0 and mark finished, otherwise
+        # _record_game_players records won=False for everyone).
         winner_seat = 1 - seat_idx
         if winner_seat < len(game.seats):
-            game.status = 'abandoned'
+            game.status = 'finished'
+            game.seats[winner_seat].score = 0
             socketio.emit('game_over', {
                 'winner_seat': winner_seat,
                 'winner_username': game.seats[winner_seat].username,

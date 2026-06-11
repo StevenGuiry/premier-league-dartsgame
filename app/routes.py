@@ -173,6 +173,14 @@ def create_solo_game():
     db.session.add(db_game)
     db.session.commit()
 
+    # Schedule the opening-turn expiry (multiplayer does this in on_join_game,
+    # rematch in on_rematch). Without it, the human's first solo turn has a
+    # client countdown but no server forfeit, so it stalls at 0.
+    from . import socketio
+    from .sockets import _expire_turn
+    socketio.start_background_task(_expire_turn, game.code, game.turn_seq,
+                                   current_app._get_current_object())
+
     return redirect(url_for('main.game_page', code=game.code))
 
 
