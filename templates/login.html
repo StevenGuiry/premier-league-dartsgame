@@ -1,31 +1,28 @@
 {% extends "base.html" %}
-{% block title %}Login — Premier League Darts{% endblock %}
+{% block title %}Sign In — Premier League Darts{% endblock %}
 
 {% block content %}
 <div class="login-wrap">
     <div class="card login-card">
-        <h1 class="page-title orbitron">Premier League Darts</h1>
-        <p class="subtitle">Enter your username to start playing</p>
+
+        <div class="login-strip">
+            <div class="login-strip-side">501</div>
+            <div class="login-strip-mid">Premier League<br>Darts</div>
+            <div class="login-strip-side">501</div>
+        </div>
+
+        <h1>Sign In</h1>
+        <p class="subtitle">Enter any username — your profile is created automatically</p>
 
         <form method="POST" action="{{ url_for('main.login') }}">
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username"
-                       placeholder="Enter your username" required maxlength="32" autofocus>
+                       placeholder="Your username" required maxlength="32" autofocus>
             </div>
             <button type="submit" class="btn" style="width:100%">Start Playing</button>
         </form>
 
-        <div class="info-box">
-            <h3>How it works</h3>
-            <ul>
-                <li>Enter any username — your profile is created automatically</li>
-                <li>Start at 501 and subtract footballer appearance counts</li>
-                <li>First to reach 0 (or within −20) wins</li>
-                <li>Only valid darts scores (≤180 apps) count</li>
-                <li>60 seconds per turn — use it wisely!</li>
-            </ul>
-        </div>
     </div>
 </div>
 {% endblock %}

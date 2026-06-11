@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Premier League Darts{% endblock %}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     {% block head %}{% endblock %}
 </head>
@@ -25,7 +27,7 @@
 
 {% with messages = get_flashed_messages() %}
 {% if messages %}
-<ul class="flash-list" style="padding:10px 20px">
+<ul class="flash-list">
     {% for msg in messages %}
     <li class="flash-msg">{{ msg }}</li>
     {% endfor %}
@@ -34,7 +36,6 @@
 {% endwith %}
 
 {% block content %}{% endblock %}
-
 {% block scripts %}{% endblock %}
 </body>
 </html>
