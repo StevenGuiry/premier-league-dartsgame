@@ -525,10 +525,13 @@ def _handle_disconnect_timeout(code: str, seat_idx: int,
             _broadcast_lobby(app)
             return
 
-        # Multiplayer — opponent wins
+        # Multiplayer — opponent wins (mirror on_leave_game so the win is
+        # actually credited: set winner score to 0 and mark finished, otherwise
+        # _record_game_players records won=False for everyone).
         winner_seat = 1 - seat_idx
         if winner_seat < len(game.seats):
-            game.status = 'abandoned'
+            game.status = 'finished'
+            game.seats[winner_seat].score = 0
             socketio.emit('game_over', {
                 'winner_seat': winner_seat,
                 'winner_username': game.seats[winner_seat].username,

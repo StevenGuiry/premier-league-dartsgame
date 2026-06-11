@@ -373,7 +373,11 @@
     });
 
     // ── Helpers ───────────────────────────────────────────────
-    function enableInput()  { inputEl.disabled = false; submitBtn.disabled = false; inputEl.focus(); }
+    function enableInput()  {
+        const wasDisabled = inputEl.disabled;
+        inputEl.disabled = false; submitBtn.disabled = false;
+        if (wasDisabled) inputEl.focus();  // only on transition — avoids re-popping mobile keyboard
+    }
     function disableInput() { inputEl.disabled = true;  submitBtn.disabled = true; }
 
     function setStatus(text, color) {
