@@ -130,8 +130,9 @@ def on_join_game(data):
     existing_seat = game.seat_for_user(uid)
 
     if existing_seat is not None:
-        # Re-attach (reconnect)
+        # Re-attach (reconnect) — bump disconnect_seq to cancel any pending timeout
         game.seats[existing_seat].connected = True
+        game.disconnect_seq[existing_seat] = game.disconnect_seq.get(existing_seat, 0) + 1
         join_room(code)
         emit('game_state', game.to_dict())
         socketio.emit('opponent_reconnected', {'seat': existing_seat},
@@ -377,7 +378,8 @@ def on_disconnect():
             game.seats[seat_idx].connected = False
             seq = game.disconnect_seq.get(seat_idx, 0) + 1
             game.disconnect_seq[seat_idx] = seq
-            socketio.emit('opponent_disconnected', {'seat': seat_idx}, room=game.code)
+            if not game.is_solo:
+                socketio.emit('opponent_disconnected', {'seat': seat_idx}, room=game.code)
             socketio.start_background_task(
                 _handle_disconnect_timeout, game.code, seat_idx, seq, uid, app
             )
@@ -514,9 +516,16 @@ def _handle_disconnect_timeout(code: str, seat_idx: int,
         if not game or game.status != 'active':
             return
         if game.disconnect_seq.get(seat_idx) != captured_seq:
-            return  # Player reconnected
+            return  # Player reconnected (seq was bumped in on_join_game)
 
-        # Opponent wins
+        if game.is_solo:
+            # Solo game — human left, just abandon; CPU cannot "win" by forfeit
+            game.status = 'abandoned'
+            _sync_game_db_bg(game)
+            _broadcast_lobby(app)
+            return
+
+        # Multiplayer — opponent wins
         winner_seat = 1 - seat_idx
         if winner_seat < len(game.seats):
             game.status = 'abandoned'
