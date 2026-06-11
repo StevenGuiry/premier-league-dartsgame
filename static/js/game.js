@@ -281,7 +281,13 @@
             const secs = Math.max(0, Math.ceil(deadline - Date.now() / 1000));
             timerEl.textContent = secs + 's';
             timerEl.classList.toggle('urgent', secs <= 10);
-            if (secs <= 0) stopCountdown();
+            if (secs <= 0) {
+                stopCountdown();
+                // Safety net: the server forfeits/advances on expiry. If that
+                // event was missed (or our clock is ahead), pull fresh state so
+                // we never stall at 0.
+                if (!gameOver) socket.emit('request_state', { code: CODE });
+            }
         }
     }
     function stopCountdown() {

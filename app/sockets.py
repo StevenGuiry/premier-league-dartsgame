@@ -109,6 +109,19 @@ def on_leave_lobby():
 # Game events
 # ---------------------------------------------------------------------------
 
+@socketio.on('request_state')
+def on_request_state(data):
+    """Re-send the authoritative state to one client without reconnect side
+    effects. Used by the client as a safety net when its turn timer hits 0."""
+    uid = _current_user_id()
+    if not uid:
+        return
+    code = data.get('code', '').upper()
+    game = get_game(code)
+    if game and game.seat_for_user(uid) is not None:
+        emit('game_state', game.to_dict())
+
+
 @socketio.on('join_game')
 def on_join_game(data):
     from flask import current_app
