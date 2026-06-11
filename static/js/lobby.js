@@ -3,9 +3,7 @@
 
     const socket = io({ transports: ['websocket', 'polling'] });
 
-    socket.on('connect', () => {
-        socket.emit('join_lobby');
-    });
+    socket.on('connect', () => { socket.emit('join_lobby'); });
 
     socket.on('lobby_update', (data) => {
         const list = document.getElementById('session-list');
@@ -13,38 +11,31 @@
 
         const sessions = data.sessions || [];
         if (sessions.length === 0) {
-            list.innerHTML = '<div class="no-sessions" id="no-sessions">No active sessions. Create one!</div>';
+            list.innerHTML = '<div class="no-sessions" id="no-sessions">No open sessions — create one above!</div>';
             return;
         }
 
         list.innerHTML = sessions.map(s => {
-            const isJoinable = s.status === 'waiting' && s.player_count < 2;
-            return `
-            <div class="session-item">
+            const joinable = s.status === 'waiting' && s.player_count < 2;
+            return `<div class="session-item">
                 <div>
-                    <div class="session-id">${escHtml(s.code)}</div>
-                    <div class="session-details">Host: ${escHtml(s.host)} &nbsp;|&nbsp; ${s.player_count}/2 players</div>
+                    <div class="session-id">${esc(s.code)}</div>
+                    <div class="session-details">Host: ${esc(s.host)} &middot; ${s.player_count}/2 players</div>
                 </div>
                 <div style="display:flex;align-items:center;gap:10px">
-                    ${isJoinable
-                        ? `<span><span class="status-dot ready"></span>Ready</span>
-                           <a href="/game/${escHtml(s.code)}" class="btn btn-teal" style="padding:8px 18px;font-size:0.85em">Join</a>`
-                        : `<span><span class="status-dot full"></span>Full</span>`
+                    ${joinable
+                        ? `<span style="font-size:0.8rem;color:var(--text-dim)"><span class="status-dot ready"></span>Open</span>
+                           <a href="/game/${esc(s.code)}" class="btn btn-teal" style="padding:8px 16px;font-size:0.8rem">Join</a>`
+                        : `<span style="font-size:0.8rem;color:var(--text-faint)"><span class="status-dot full"></span>Full</span>`
                     }
                 </div>
             </div>`;
         }).join('');
     });
 
-    socket.on('disconnect', () => {
-        // Silently reconnect — socket.io handles this automatically.
-    });
-
-    function escHtml(str) {
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
+    function esc(s) {
+        return String(s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 })();

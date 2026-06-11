@@ -1,43 +1,58 @@
 {% extends "base.html" %}
-{% block title %}Profile — {{ user.username }} — Premier League Darts{% endblock %}
+{% block title %}{{ user.username }} — Profile{% endblock %}
 
 {% block content %}
 <div class="profile-wrap">
-    <h2 class="page-title orbitron" style="text-align:center;margin-bottom:8px">{{ user.username }}</h2>
-    <p style="text-align:center;color:var(--text-dim);margin-bottom:28px">Player Profile</p>
 
-    <!-- Stats -->
-    <h3 class="orbitron" style="color:var(--accent);font-size:1em;letter-spacing:2px;margin-bottom:14px">Statistics</h3>
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-value">{{ stats.games_played }}</div>
-            <div class="stat-label">Played</div>
+    <div class="profile-header">
+        <h1>{{ user.username }}</h1>
+        <p>Player profile</p>
+    </div>
+
+    <!-- Stats + win-rate ring -->
+    <div class="section-label">Statistics</div>
+    {% set win_pct = (stats.games_won / stats.games_played * 100) | round | int if stats.games_played > 0 else 0 %}
+    <div class="profile-stats-row">
+        <div class="win-ring-wrap">
+            <div class="win-ring" style="--win-pct: {{ win_pct }}">
+                <div class="win-ring-inner">
+                    <div class="win-ring-pct">{{ win_pct }}%</div>
+                    <div class="win-ring-label">Win rate</div>
+                </div>
+            </div>
+            <div class="win-ring-title">{{ stats.games_won }}W / {{ stats.games_lost }}L</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ stats.games_won }}</div>
-            <div class="stat-label">Won</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ stats.games_lost }}</div>
-            <div class="stat-label">Lost</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ stats.best_score }}</div>
-            <div class="stat-label">Best Score</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ stats.average_score }}</div>
-            <div class="stat-label">Avg Score</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ stats.perfect_games }}</div>
-            <div class="stat-label">Perfect</div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.games_played }}</div>
+                <div class="stat-label">Played</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.games_won }}</div>
+                <div class="stat-label">Won</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.best_score }}</div>
+                <div class="stat-label">Best Score</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.average_score }}</div>
+                <div class="stat-label">Avg Score</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.perfect_games }}</div>
+                <div class="stat-label">Perfect</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.total_forfeits }}</div>
+                <div class="stat-label">Forfeits</div>
+            </div>
         </div>
     </div>
 
     <!-- Achievements -->
-    <h3 class="orbitron" style="color:var(--accent);font-size:1em;letter-spacing:2px;margin-bottom:14px">Achievements</h3>
-    <div class="achievements-grid" style="margin-bottom:28px">
+    <div class="section-label" style="margin-top:8px">Achievements</div>
+    <div class="achievements-grid" style="margin-bottom:24px">
         {% for a in achievements %}
         <div class="achievement {% if a.earned %}earned{% endif %}">
             <div class="achievement-name">{{ a.label }}</div>
@@ -47,40 +62,23 @@
     </div>
 
     <!-- Recent games -->
-    <h3 class="orbitron" style="color:var(--accent);font-size:1em;letter-spacing:2px;margin-bottom:14px">Recent Games</h3>
+    <div class="section-label">Recent Games</div>
     {% if recent_games %}
-    <div class="card" style="padding:0;overflow:hidden">
-        <table class="recent-table">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Opponent</th>
-                    <th>Score</th>
-                    <th>Turns</th>
-                    <th>Result</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for g in recent_games %}
-                <tr>
-                    <td style="color:var(--text-dim)">{{ g.date }}</td>
-                    <td>{{ g.opponent }}</td>
-                    <td>{{ g.final_score }}</td>
-                    <td>{{ g.turns_taken }}</td>
-                    <td>
-                        {% if g.won %}
-                            <span class="win-badge">WIN</span>
-                        {% else %}
-                            <span class="loss-badge">LOSS</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="recent-feed">
+        {% for g in recent_games %}
+        <div class="recent-row">
+            <span class="recent-result {% if g.won %}win{% else %}loss{% endif %}">
+                {% if g.won %}WIN{% else %}LOSS{% endif %}
+            </span>
+            <span class="recent-opp">vs {{ g.opponent }}</span>
+            <span class="recent-score">{{ g.final_score }}</span>
+            <span class="recent-meta">{{ g.date }}</span>
+        </div>
+        {% endfor %}
     </div>
     {% else %}
-    <p style="color:var(--text-faint);font-style:italic;text-align:center;padding:30px 0">No games played yet. Start your first game!</p>
+    <p class="no-games-msg">No games played yet — head to the lobby to get started!</p>
     {% endif %}
+
 </div>
 {% endblock %}

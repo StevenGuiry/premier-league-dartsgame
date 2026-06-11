@@ -4,95 +4,98 @@
 {% block content %}
 <div class="lobby-wrap">
     <div class="lobby-header">
-        <h1 class="page-title orbitron">Premier League Darts</h1>
-        <p>Create or join a game</p>
+        <h1>Premier League Darts</h1>
+        <p>Choose your game</p>
     </div>
 
     <div class="user-bar">
         <div>
             <div class="user-name">{{ user.username }}</div>
             <div class="user-stats">
-                W {{ stats.games_won }} / L {{ stats.games_lost }} &nbsp;|&nbsp;
-                Best: {{ stats.best_score }} &nbsp;|&nbsp;
-                Played: {{ stats.games_played }}
+                W {{ stats.games_won }} / L {{ stats.games_lost }}
+                &nbsp;&middot;&nbsp; Best: {{ stats.best_score }}
+                &nbsp;&middot;&nbsp; Played: {{ stats.games_played }}
             </div>
         </div>
-        <a href="{{ url_for('main.profile') }}" class="btn btn-teal" style="padding:8px 20px;font-size:0.85em">Profile</a>
+        <a href="{{ url_for('main.profile') }}" class="btn btn-ghost" style="padding:8px 16px;font-size:0.8rem">Profile</a>
     </div>
 
-    <!-- Create game -->
-    <div class="lobby-section card">
-        <h2>New Game</h2>
-        <p style="color:var(--text-dim);margin-bottom:18px">
-            Create a session and share the code with your opponent
-        </p>
-        <form method="POST" action="{{ url_for('main.create_game_route') }}">
-            <button type="submit" class="btn">Create Session</button>
-        </form>
+    <!-- Play now hero -->
+    <div class="lobby-section">
+        <div class="section-label">Play now</div>
+        <div class="play-hero">
+            <div class="play-hero-title">Multiplayer</div>
+            <p>Create a session and share the code with a friend</p>
+            <form method="POST" action="{{ url_for('main.create_game_route') }}">
+                <button type="submit" class="btn">Create Session</button>
+            </form>
+        </div>
     </div>
 
     <!-- Single player -->
-    <div class="lobby-section card">
-        <h2>Single Player</h2>
-        <p style="color:var(--text-dim);margin-bottom:18px">
-            Play against the CPU — choose your difficulty
-        </p>
-        <div style="display:flex;gap:12px;flex-wrap:wrap">
+    <div class="lobby-section">
+        <div class="section-label">Single Player</div>
+        <div class="play-hero">
+            <div class="play-hero-title">vs CPU</div>
+            <p>Play against the computer — pick your difficulty</p>
             <form method="POST" action="{{ url_for('main.create_solo_game') }}">
                 <input type="hidden" name="difficulty" value="easy">
-                <button type="submit" class="btn btn-teal">vs CPU (Easy)</button>
+                <button type="submit" class="btn btn-teal">Easy</button>
             </form>
             <form method="POST" action="{{ url_for('main.create_solo_game') }}">
                 <input type="hidden" name="difficulty" value="hard">
-                <button type="submit" class="btn btn-danger">vs CPU (Hard)</button>
+                <button type="submit" class="btn btn-danger">Hard</button>
             </form>
         </div>
     </div>
 
-    <!-- Active sessions (updated live via Socket.IO) -->
-    <div class="lobby-section card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-            <h2 style="margin-bottom:0">Available Games</h2>
-        </div>
+    <!-- Available games -->
+    <div class="lobby-section">
+        <div class="section-label">Available Games</div>
         <div class="session-list" id="session-list">
             {% if sessions %}
                 {% for s in sessions %}
                 <div class="session-item">
                     <div>
                         <div class="session-id">{{ s.code }}</div>
-                        <div class="session-details">
-                            Host: {{ s.host }} &nbsp;|&nbsp; {{ s.player_count }}/2 players
-                        </div>
+                        <div class="session-details">Host: {{ s.host }} &middot; {{ s.player_count }}/2 players</div>
                     </div>
-                    <div style="display:flex;align-items:center;gap:10px">
+                    <div>
                         {% if s.status == 'waiting' and s.player_count < 2 %}
-                            <span><span class="status-dot ready"></span>Ready</span>
-                            <a href="{{ url_for('main.game_page', code=s.code) }}" class="btn btn-teal" style="padding:8px 18px;font-size:0.85em">Join</a>
+                            <span style="font-size:0.8rem;color:var(--text-dim);margin-right:10px">
+                                <span class="status-dot ready"></span>Open
+                            </span>
+                            <a href="{{ url_for('main.game_page', code=s.code) }}" class="btn btn-teal" style="padding:8px 16px;font-size:0.8rem">Join</a>
                         {% else %}
-                            <span><span class="status-dot full"></span>Full</span>
+                            <span style="font-size:0.8rem;color:var(--text-faint)">
+                                <span class="status-dot full"></span>Full
+                            </span>
                         {% endif %}
                     </div>
                 </div>
                 {% endfor %}
             {% else %}
-                <div class="no-sessions" id="no-sessions">No active sessions. Create one!</div>
+                <div class="no-sessions" id="no-sessions">No open sessions — create one above!</div>
             {% endif %}
         </div>
     </div>
 
-    <!-- Rules -->
-    <div class="rules-box">
-        <h3>How to Play</h3>
-        <ul>
-            <li><strong>Start:</strong> Both players begin with {{ 501 }} points</li>
-            <li><strong>Prompt:</strong> Each game has one prompt — e.g. "Name a Forward who played for Arsenal"</li>
-            <li><strong>Scoring:</strong> Submit a footballer's name; their PL appearances are subtracted from your score</li>
-            <li><strong>Valid scores:</strong> Player must have ≤180 apps AND a valid 3-dart score</li>
-            <li><strong>Bust:</strong> Going below −20 forfeits your turn</li>
-            <li><strong>Win:</strong> First to reach 0 or between −20 and 0 wins!</li>
-            <li><strong>Timer:</strong> 60 seconds per turn — timeout = forfeit</li>
-        </ul>
-    </div>
+    <!-- Rules accordion -->
+    <details class="rules-accordion">
+        <summary>How to Play</summary>
+        <div class="rules-body">
+            <ul>
+                <li><strong>Start:</strong> both players begin at 501 points</li>
+                <li><strong>Prompt:</strong> one random category per game, e.g. "Name a Forward who played for Arsenal"</li>
+                <li><strong>Scoring:</strong> submit a footballer's name — their Premier League appearances are deducted from your score</li>
+                <li><strong>Valid picks:</strong> ≤ 180 apps and a reachable 3-dart score (no 163, 166 etc.)</li>
+                <li><strong>Bust:</strong> new score below −20 forfeits your turn; score unchanged</li>
+                <li><strong>Win:</strong> first to reach 0 or between −20 and 0</li>
+                <li><strong>Timer:</strong> 60 seconds per turn — time out = forfeit</li>
+            </ul>
+        </div>
+    </details>
+
 </div>
 {% endblock %}
 

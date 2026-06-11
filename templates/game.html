@@ -2,55 +2,73 @@
 {% block title %}Game {{ code }} — Premier League Darts{% endblock %}
 
 {% block content %}
-<div class="game-wrap" id="game-root">
-    <!-- Player 0 history (left) -->
-    <div class="history-panel" id="history-0">
-        <h3 id="history-0-title">Player 1</h3>
-        <div id="history-0-entries"></div>
+
+<!-- Scoreboard strip (sticky below nav) -->
+<div class="scoreboard">
+    <div class="sb-side" id="side-0">
+        <div class="sb-name" id="name-0">Player 1</div>
+        <div class="sb-score" id="score-0">{{ start_score }}</div>
+        <div class="sb-turn-label" id="turn-label-0"></div>
     </div>
-
-    <!-- Centre panel -->
-    <div class="game-center">
-        <div class="session-info">
-            <div>Session: <span class="session-code">{{ code }}</span></div>
-            <div class="session-status" id="session-status">Connecting...</div>
-        </div>
-
-        <h2 class="page-title orbitron">Premier League Darts</h2>
-
-        <div class="prompt-box" id="prompt-box">Loading prompt...</div>
-
-        <div class="player-cards" id="player-cards"></div>
-
-        <div class="input-group">
-            <div class="autocomplete-container">
-                <input type="text" id="player_name"
-                       placeholder="Enter footballer name" autocomplete="off"
-                       disabled>
-                <div id="autocomplete-dropdown" class="autocomplete-dropdown"></div>
-            </div>
-            <button class="btn" id="submit-btn" disabled>Submit</button>
-        </div>
-
-        <div class="message-box" id="message-box"></div>
-
-        <div id="timer">Waiting for players...</div>
-
-        <div class="game-actions">
-            <button class="btn btn-teal" id="rematch-btn" style="display:none">Rematch</button>
-            <button class="btn btn-danger" id="leave-btn">Leave Game</button>
-            <a href="{{ url_for('main.lobby') }}" class="btn btn-teal">Back to Lobby</a>
+    <div class="sb-center">
+        <div class="timer-pill" id="timer-pill">—</div>
+        <div class="session-badge">
+            <span class="code">{{ code }}</span>
+            <span class="session-status" id="session-status">Connecting...</span>
         </div>
     </div>
-
-    <!-- Player 1 history (right) -->
-    <div class="history-panel" id="history-1">
-        <h3 id="history-1-title">Player 2</h3>
-        <div id="history-1-entries"></div>
+    <div class="sb-side sb-side--right" id="side-1">
+        <div class="sb-name" id="name-1">Player 2</div>
+        <div class="sb-score" id="score-1">{{ start_score }}</div>
+        <div class="sb-turn-label" id="turn-label-1"></div>
     </div>
 </div>
 
-<!-- Pass initial state and meta to JS -->
+<!-- Main game column -->
+<div class="game-main">
+
+    <div class="prompt-hero" id="prompt-box">Loading prompt...</div>
+
+    <div class="message-strip" id="message-box"></div>
+
+    <div class="turn-feed" id="turn-feed">
+        <div class="feed-empty">No turns yet — good luck!</div>
+    </div>
+
+    <div class="input-dock">
+        <div class="autocomplete-container">
+            <input type="text" id="player_name"
+                   placeholder="Enter footballer name" autocomplete="off"
+                   disabled>
+            <div id="autocomplete-dropdown" class="autocomplete-dropdown"></div>
+        </div>
+        <button class="btn" id="submit-btn" disabled>Go</button>
+    </div>
+
+</div>
+
+<div class="game-footer">
+    <button class="btn btn-ghost" id="leave-btn">Leave Game</button>
+    <a href="{{ url_for('main.lobby') }}" class="btn btn-ghost">Lobby</a>
+</div>
+
+<!-- Win overlay -->
+<div class="win-overlay" id="win-overlay" hidden>
+    <div class="win-card">
+        <div class="win-label">Game Shot</div>
+        <div class="win-winner-name" id="win-winner-name"></div>
+        <div class="win-wins" id="win-wins"></div>
+        <div class="win-scores-row" id="win-scores-row"></div>
+        <div class="win-actions">
+            <button class="btn" id="rematch-btn">Rematch</button>
+            <a href="{{ url_for('main.lobby') }}" class="btn btn-ghost">Lobby</a>
+        </div>
+    </div>
+</div>
+
+<!-- Turn banner -->
+<div class="turn-banner" id="turn-banner" hidden>Your Turn!</div>
+
 <script type="application/json" id="init-data">{
     "code": {{ code | tojson }},
     "myUserId": {{ user.id }},
