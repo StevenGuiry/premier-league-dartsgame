@@ -8,7 +8,8 @@ from . import db
 from .models import Game, GamePlayer, Player, User
 from .stats import ACHIEVEMENT_LABELS, compute_achievements, get_recent_games, get_user_stats
 from .game_manager import (create_game, get_game, get_game_for_user,
-                            assign_prompt, lobby_sessions, GAMES)
+                            assign_prompt, lobby_sessions, GAMES, Seat,
+                            start_turn_timer)
 from .game_logic import normalize_name_key
 
 bp = Blueprint('main', __name__)
@@ -142,6 +143,38 @@ def game_page(code):
 # ---------------------------------------------------------------------------
 # Profile
 # ---------------------------------------------------------------------------
+
+@bp.route('/game/create-solo', methods=['POST'])
+@login_required
+def create_solo_game():
+    user = current_user()
+    difficulty = request.form.get('difficulty', 'easy')
+    if difficulty not in ('easy', 'hard'):
+        difficulty = 'easy'
+
+    existing = get_game_for_user(user.id)
+    if existing:
+        return redirect(url_for('main.game_page', code=existing.code))
+
+    start_score = current_app.config['START_SCORE']
+    game = create_game(start_score)
+    game.is_solo = True
+    assign_prompt(game)
+
+    game.seats.append(Seat(user_id=user.id, username=user.username, score=start_score))
+    cpu_label = f'CPU ({difficulty.capitalize()})'
+    game.seats.append(Seat(user_id=None, username=cpu_label, score=start_score,
+                           is_cpu=True, cpu_difficulty=difficulty))
+
+    game.status = 'active'
+    start_turn_timer(game)
+
+    db_game = Game(code=game.code, status='active')
+    db.session.add(db_game)
+    db.session.commit()
+
+    return redirect(url_for('main.game_page', code=game.code))
+
 
 @bp.route('/profile')
 @login_required

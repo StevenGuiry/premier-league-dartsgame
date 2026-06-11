@@ -1,4 +1,5 @@
 """Pure game logic — no Flask or DB imports."""
+import random
 import unicodedata
 import re
 from dataclasses import dataclass, field
@@ -278,3 +279,38 @@ def evaluate_submission(current_score: int, name: str, used: set,
         return Outcome.WIN, apps, player
 
     return Outcome.SCORED, apps, player
+
+
+# ---------------------------------------------------------------------------
+# CPU opponent
+# ---------------------------------------------------------------------------
+
+def cpu_pick(current_score: int, used: set, prompt: Prompt,
+             index: PlayerIndex, difficulty: str):
+    """Pick a valid player for the CPU. Returns player dict or None (no valid pick)."""
+    candidates = []
+    for player in index.by_name_key.values():
+        if player['name_key'] in used:
+            continue
+        if player['apps'] > 180 or player['apps'] not in VALID_DART_SCORES:
+            continue
+        if not matches_prompt(player, prompt):
+            continue
+        if current_score - player['apps'] < -20:
+            continue  # would bust
+        candidates.append(player)
+
+    if not candidates:
+        return None
+
+    if difficulty == 'easy':
+        # Pick randomly from the lower-apps half — slow, beatable progress
+        candidates.sort(key=lambda p: p['apps'])
+        pool = candidates[:max(1, len(candidates) // 2)]
+        return random.choice(pool)
+
+    # hard: win immediately if possible, otherwise take the biggest chunk
+    winning = [p for p in candidates if -20 <= current_score - p['apps'] <= 0]
+    if winning:
+        return min(winning, key=lambda p: abs(current_score - p['apps']))
+    return max(candidates, key=lambda p: p['apps'])
