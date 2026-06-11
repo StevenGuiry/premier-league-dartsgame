@@ -522,17 +522,14 @@ nav {
     100% { opacity: 0; transform: translateY(-40px); }
 }
 
-/* Main game column — fixed viewport height so feed scrolls, nothing overlaps scoreboard */
+/* Main game column */
 .game-main {
     max-width: 680px;
     margin: 0 auto;
-    padding: 12px 16px 8px;
+    padding: 20px 16px 0;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    height: calc(100vh - 52px - 80px);
-    height: calc(100dvh - 52px - 80px);
-    overflow: hidden;
+    gap: 12px;
 }
 
 /* Prompt hero */
@@ -566,14 +563,13 @@ nav {
 .message-strip.info    { border-left-color: var(--opp); color: var(--opp); }
 .message-strip.error   { border-left-color: var(--danger); color: var(--danger); }
 
-/* Turn feed — grows to fill remaining height between prompt and dock */
+/* Turn feed */
 .turn-feed {
     background: var(--surface);
     border: 1px solid var(--surface-3);
     border-radius: var(--radius-lg);
     overflow-y: auto;
-    flex: 1;
-    min-height: 0;
+    max-height: 280px;
     padding: 8px;
 }
 .feed-empty {
@@ -622,7 +618,7 @@ nav {
 .feed-row.bust   .feed-result { color: var(--warn); }
 .feed-row.forfeit .feed-result { color: var(--danger); }
 
-/* Input dock — fixed at bottom of game-main flex column */
+/* Input dock */
 .input-dock {
     background: var(--surface);
     border: 1px solid var(--surface-3);
@@ -631,8 +627,10 @@ nav {
     display: flex;
     gap: 10px;
     align-items: flex-start;
-    flex-shrink: 0;
+    position: sticky;
+    bottom: 0;
     z-index: 50;
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.4);
 }
 .autocomplete-container { position: relative; flex: 1; }
 #player_name {
@@ -680,13 +678,15 @@ nav {
 .autocomplete-item:last-child { border-bottom: none; }
 .autocomplete-item:hover, .autocomplete-item.selected { background: rgba(255,107,53,0.15); }
 
-/* Game footer (leave button) — compact row at bottom of game-main */
+/* Game footer (leave button) */
 .game-footer {
+    max-width: 680px;
+    margin: 16px auto 32px;
     display: flex;
     justify-content: center;
     gap: 10px;
-    flex-shrink: 0;
-    padding: 4px 0 0;
+    flex-wrap: wrap;
+    padding: 0 16px;
 }
 
 /* Win overlay */
@@ -928,8 +928,9 @@ nav {
     .sb-center  { padding: 6px 10px; }
     .timer-pill { font-size: 0.9rem; padding: 3px 10px; }
 
-    .game-main  { padding: 10px 10px 6px; gap: 8px; height: calc(100vh - 52px - 64px); height: calc(100dvh - 52px - 64px); }
+    .game-main  { padding: 12px 10px 0; gap: 10px; }
     .prompt-hero { font-size: 0.95rem; padding: 14px 16px; }
+    .turn-feed  { max-height: 200px; }
     .input-dock { padding: 12px; }
 
     .profile-stats-row { flex-direction: column; }
