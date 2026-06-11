@@ -132,11 +132,17 @@
             const isMe = (p.seat === mySeat);
             const card = document.createElement('div');
             card.className = 'player-card' + (isActive ? ' active' : '');
+            let turnLabel = '';
+            if (isActive) {
+                turnLabel = p.is_cpu
+                    ? '<div class="your-turn">Thinking...</div>'
+                    : '<div class="your-turn">Your Turn</div>';
+            }
             card.innerHTML = `
                 <h3>${escHtml(p.username)}${isMe ? ' (you)' : ''}</h3>
                 <div class="score">${p.score}</div>
-                ${isActive ? '<div class="your-turn">Your turn</div>' : ''}
-                ${!p.connected ? '<div class="disconnected">Disconnected</div>' : ''}
+                ${turnLabel}
+                ${!p.connected && !p.is_cpu ? '<div class="disconnected">Disconnected</div>' : ''}
             `;
             cardsEl.appendChild(card);
         }
@@ -158,8 +164,14 @@
             disableInput();
         }
 
-        // Countdown
-        if (!gameOver && state.status === 'active' && state.deadline_epoch > 0) {
+        // Countdown — suppress during CPU turn
+        const cpuTurn = state.status === 'active'
+            && state.players[state.turn_seat]
+            && state.players[state.turn_seat].is_cpu;
+        if (cpuTurn) {
+            stopCountdown();
+            timerEl.textContent = '';
+        } else if (!gameOver && state.status === 'active' && state.deadline_epoch > 0) {
             startCountdown(state.deadline_epoch);
         } else if (state.status === 'waiting') {
             timerEl.textContent = 'Waiting for players…';

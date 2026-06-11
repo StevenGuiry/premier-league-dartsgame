@@ -7,7 +7,7 @@ from flask_socketio import emit, join_room, leave_room
 
 from . import db, socketio
 from .models import Game, GamePlayer, User
-from .game_logic import Outcome, evaluate_submission
+from .game_logic import Outcome, evaluate_submission, cpu_pick
 from .game_manager import (GAMES, assign_prompt, create_game, get_game,
                             get_player_index, lobby_sessions, start_turn_timer)
 
@@ -48,6 +48,8 @@ def _record_game_players(game, app):
         if not db_game:
             return
         for i, seat in enumerate(game.seats):
+            if seat.is_cpu:
+                continue  # CPU has no DB user row
             gp = GamePlayer(
                 game_id=db_game.id,
                 user_id=seat.user_id,
@@ -210,7 +212,9 @@ def on_submit_player(data):
         msg = messages[outcome]
         if player:
             msg += '\n' + _player_info_text(player)
+        app = current_app._get_current_object()
         _advance_turn(game)
+        _maybe_trigger_cpu(game, app)
         socketio.emit('turn_result', {'outcome': outcome, 'message': msg,
                                       'forfeited': True}, room=code)
         socketio.emit('game_state', game.to_dict(), room=code)
@@ -220,7 +224,9 @@ def on_submit_player(data):
         seat.forfeit_count += 1
         seat.history.append({'name': player['name'], 'result': 'BUST'})
         msg = f'BUST! Score would go below −20. Turn forfeited.\n{_player_info_text(player)}'
+        app = current_app._get_current_object()
         _advance_turn(game)
+        _maybe_trigger_cpu(game, app)
         socketio.emit('turn_result', {'outcome': outcome, 'message': msg,
                                       'forfeited': True}, room=code)
         socketio.emit('game_state', game.to_dict(), room=code)
@@ -247,10 +253,11 @@ def on_submit_player(data):
         _record_game_players(game, app)
         _sync_game_db_bg(game)
         _broadcast_lobby(app)
-        # Clean up memory after a short delay
         socketio.start_background_task(_cleanup_game, code, app)
     else:
+        app = current_app._get_current_object()
         _advance_turn(game)
+        _maybe_trigger_cpu(game, app)
         socketio.emit('turn_result', {'outcome': outcome, 'message': msg,
                                       'forfeited': False}, room=code)
         socketio.emit('game_state', game.to_dict(), room=code)
@@ -276,18 +283,21 @@ def on_leave_game(data):
     app = current_app._get_current_object()
 
     if game.status == 'active':
-        # Other player wins by abandonment
-        winner_seat = 1 - seat_idx
-        if winner_seat < len(game.seats):
-            game.status = 'finished'
-            game.seats[winner_seat].score = 0  # mark as winner
-            socketio.emit('game_over', {
-                'winner_seat': winner_seat,
-                'winner_username': game.seats[winner_seat].username,
-                'final_scores': [s.score for s in game.seats],
-                'abandoned': True,
-            }, room=code)
-            _record_game_players(game, app)
+        if game.is_solo:
+            # No CPU "win" for abandonment — just close the game
+            game.status = 'abandoned'
+        else:
+            winner_seat = 1 - seat_idx
+            if winner_seat < len(game.seats):
+                game.status = 'finished'
+                game.seats[winner_seat].score = 0
+                socketio.emit('game_over', {
+                    'winner_seat': winner_seat,
+                    'winner_username': game.seats[winner_seat].username,
+                    'final_scores': [s.score for s in game.seats],
+                    'abandoned': True,
+                }, room=code)
+                _record_game_players(game, app)
         _sync_game_db_bg(game)
     elif game.status == 'waiting':
         game.status = 'abandoned'
@@ -321,17 +331,23 @@ def on_rematch(data):
         old_game.rematch_ready = set()
     old_game.rematch_ready.add(seat_idx)
 
-    if len(old_game.rematch_ready) < len(old_game.seats):
+    # For solo games, only the human needs to accept; for multiplayer, both must.
+    human_seat_count = sum(1 for s in old_game.seats if not s.is_cpu)
+    if len(old_game.rematch_ready) < human_seat_count:
         emit('rematch_waiting', {'message': 'Waiting for opponent to accept rematch...'})
         return
 
-    # Both ready — create a new game
+    # Ready — create a new game preserving seat types
     from .game_manager import Seat
     new_game = create_game(start_score)
+    new_game.is_solo = old_game.is_solo
     assign_prompt(new_game)
 
     for s in old_game.seats:
-        new_game.seats.append(Seat(user_id=s.user_id, username=s.username, score=start_score))
+        new_game.seats.append(Seat(
+            user_id=s.user_id, username=s.username, score=start_score,
+            is_cpu=s.is_cpu, cpu_difficulty=s.cpu_difficulty,
+        ))
 
     new_game.status = 'active'
     start_turn_timer(new_game)
@@ -342,6 +358,7 @@ def on_rematch(data):
 
     socketio.emit('rematch_start', {'code': new_game.code}, room=code)
     socketio.start_background_task(_expire_turn, new_game.code, new_game.turn_seq, app)
+    _maybe_trigger_cpu(new_game, app)
     _broadcast_lobby(app)
 
 
@@ -371,6 +388,15 @@ def on_disconnect():
 # Background tasks
 # ---------------------------------------------------------------------------
 
+def _maybe_trigger_cpu(game, app) -> None:
+    """Schedule a CPU turn if the current seat is a CPU."""
+    if game.status != 'active':
+        return
+    seat = game.seats[game.current_turn]
+    if seat.is_cpu:
+        socketio.start_background_task(_cpu_take_turn, game.code, game.turn_seq, app)
+
+
 def _advance_turn(game) -> None:
     start_turn_timer(game)
     game.current_turn = (game.current_turn + 1) % 2
@@ -392,6 +418,10 @@ def _expire_turn(code: str, captured_seq: int, app) -> None:
             return  # A newer turn is running; this task is stale
 
         seat = game.seats[game.current_turn]
+        if seat.is_cpu:
+            # CPU should never actually time out — stale guard covers this
+            return
+
         seat.turns_taken += 1
         seat.forfeit_count += 1
         seat.history.append({'name': 'Timeout', 'result': 'X'})
@@ -407,6 +437,72 @@ def _expire_turn(code: str, captured_seq: int, app) -> None:
         socketio.emit('game_state', game.to_dict(), room=code)
 
         socketio.start_background_task(_expire_turn, code, game.turn_seq, app)
+        _maybe_trigger_cpu(game, app)
+
+
+def _cpu_take_turn(code: str, captured_seq: int, app) -> None:
+    import gevent
+    gevent.sleep(1.5)
+    with app.app_context():
+        game = get_game(code)
+        if not game or game.status != 'active':
+            return
+        if game.turn_seq != captured_seq:
+            return
+
+        cpu_seat_idx = game.current_turn
+        seat = game.seats[cpu_seat_idx]
+        if not seat.is_cpu:
+            return
+
+        idx = get_player_index()
+        player = cpu_pick(seat.score, game.used_players, game.prompt, idx, seat.cpu_difficulty)
+        seat.turns_taken += 1
+
+        if player is None:
+            # No valid pick — CPU forfeits its turn
+            seat.forfeit_count += 1
+            seat.history.append({'name': '—', 'result': 'X'})
+            game.current_turn = (game.current_turn + 1) % 2
+            start_turn_timer(game)
+            socketio.emit('turn_result', {
+                'outcome': 'forfeit',
+                'message': f'{seat.username} has no valid pick — turn skipped.',
+                'forfeited': True,
+            }, room=code)
+            socketio.emit('game_state', game.to_dict(), room=code)
+            socketio.start_background_task(_expire_turn, code, game.turn_seq, app)
+            return
+
+        apps = player['apps']
+        new_score = seat.score - apps
+        game.used_players.add(player['name_key'])
+        seat.score = new_score
+        seat.history.append({'name': player['name'], 'result': apps})
+        msg = f"{seat.username} plays: {player['name']} (−{apps})"
+
+        if -20 <= new_score <= 0:
+            game.status = 'finished'
+            game.deadline_epoch = 0.0
+            socketio.emit('turn_result', {'outcome': Outcome.WIN, 'message': msg,
+                                          'forfeited': False}, room=code)
+            socketio.emit('game_over', {
+                'winner_seat': cpu_seat_idx,
+                'winner_username': seat.username,
+                'final_scores': [s.score for s in game.seats],
+            }, room=code)
+            socketio.emit('game_state', game.to_dict(), room=code)
+            _record_game_players(game, app)
+            _sync_game_db_bg(game)
+            _broadcast_lobby(app)
+            socketio.start_background_task(_cleanup_game, code, app)
+        else:
+            game.current_turn = (game.current_turn + 1) % 2
+            start_turn_timer(game)
+            socketio.emit('turn_result', {'outcome': Outcome.SCORED, 'message': msg,
+                                          'forfeited': False}, room=code)
+            socketio.emit('game_state', game.to_dict(), room=code)
+            socketio.start_background_task(_expire_turn, code, game.turn_seq, app)
 
 
 def _handle_disconnect_timeout(code: str, seat_idx: int,

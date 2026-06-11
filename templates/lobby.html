@@ -31,6 +31,24 @@
         </form>
     </div>
 
+    <!-- Single player -->
+    <div class="lobby-section card">
+        <h2>Single Player</h2>
+        <p style="color:var(--text-dim);margin-bottom:18px">
+            Play against the CPU — choose your difficulty
+        </p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <form method="POST" action="{{ url_for('main.create_solo_game') }}">
+                <input type="hidden" name="difficulty" value="easy">
+                <button type="submit" class="btn btn-teal">vs CPU (Easy)</button>
+            </form>
+            <form method="POST" action="{{ url_for('main.create_solo_game') }}">
+                <input type="hidden" name="difficulty" value="hard">
+                <button type="submit" class="btn btn-danger">vs CPU (Hard)</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Active sessions (updated live via Socket.IO) -->
     <div class="lobby-section card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">

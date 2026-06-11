@@ -29,13 +29,15 @@ def get_prompt_pool() -> list:
 
 @dataclass
 class Seat:
-    user_id: int
+    user_id: Optional[int]   # None for CPU
     username: str
     score: int
     turns_taken: int = 0
     forfeit_count: int = 0
     connected: bool = True
     history: list = field(default_factory=list)
+    is_cpu: bool = False
+    cpu_difficulty: Optional[str] = None  # 'easy' | 'hard' | None
 
 
 @dataclass
@@ -49,11 +51,13 @@ class GameSession:
     turn_seq: int = 0
     deadline_epoch: float = 0.0
     disconnect_seq: Dict[int, int] = field(default_factory=dict)  # seat -> seq
+    is_solo: bool = False
 
     def to_dict(self) -> dict:
         return {
             'code': self.code,
             'status': self.status,
+            'is_solo': self.is_solo,
             'players': [
                 {
                     'username': s.username,
@@ -61,6 +65,7 @@ class GameSession:
                     'score': s.score,
                     'connected': s.connected,
                     'history': list(s.history),
+                    'is_cpu': s.is_cpu,
                 }
                 for i, s in enumerate(self.seats)
             ],
